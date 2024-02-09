@@ -9,6 +9,7 @@
         httpOnly: true
     }
 
+    // sending cookies in response
     res.status(statusCode).cookie('jwt_token', token, options).json({
         success: true,
         user,
