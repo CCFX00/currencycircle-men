@@ -49,7 +49,6 @@ const userSchema = new mongoose.Schema({
 // hashing password
 
 
-
 // generate JWT token
 
 
