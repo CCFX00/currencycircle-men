@@ -2,8 +2,6 @@ const User = require('../models/userModel')
 const ErrorHandler = require('../utils/ErrorHandler')
 const catchAsyncErrors = require('../middleware/catchAsyncErrors')
 const Features = require('../utils/Features')
-const jwt = require('jsonwebtoken')
-const sendToken = require('../utils/cookies-JWT')
 
 // Getting all users
 exports.getAllUsers = catchAsyncErrors(async (req, res) => {
@@ -73,35 +71,9 @@ exports.getSingleUser = catchAsyncErrors(async (req, res, next) => {
 // Creating new user
 exports.createUser = catchAsyncErrors(async (req, res) => {
     const user = await User.create(req.body)
-    sendToken(user, 201, res)
-})
-
-// login User
-exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
-    const {email, password} = req.body
-
-    if(!email || !password){
-        return next(new ErrorHandler('Please enter your email and password', 400))
-    }
-    
-    const user = await User.findOne({email}).select("+password")
-
-    if(!user){
-        return next(new ErrorHandler('User not found with this email and password', 401))
-    }
-    
-    sendToken(user, 200, res)
-})
-
-// logout user
-exports.logoutUser = catchAsyncErrors(async(req, res, next) => {
-    res.cookie("jwt_token", null, {
-        expires: new Date(Date.now()),
-        httpOnly: true
-    })
 
     res.status(200).json({
         success: true,
-        message:"User logged out successfully"
+        user
     })
 })
