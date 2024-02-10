@@ -51,7 +51,6 @@ const userSchema = new mongoose.Schema({
 
 
 // generate JWT token
-generateJWT(userSchema)
 
 
 module.exports = mongoose.model('User', userSchema)
