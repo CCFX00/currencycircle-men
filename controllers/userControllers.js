@@ -3,7 +3,7 @@ const ErrorHandler = require('../utils/ErrorHandler')
 const catchAsyncErrors = require('../middleware/catchAsyncErrors')
 const Features = require('../utils/Features')
 const jwt = require('jsonwebtoken')
-const sendToken = require('../utils/jwtToken-cookie')
+const sendToken = require('../utils/cookies-JWT')
 
 // Getting all users
 exports.getAllUsers = catchAsyncErrors(async (req, res) => {
