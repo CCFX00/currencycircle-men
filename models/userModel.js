@@ -93,32 +93,47 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please enter address line 1'],
     maxLength: [20, 'alphanumeric maximum 20 characters'],
+    validate: {
+      validator: function (value) {
+        return /^[a-zA-Z0-9]+$/.test(value);
+      },
+      message: 'Address line 1 should contain alphanumeric characters only'
+    },
   },
   address2: {
     type: String,
     required: [true, 'Please enter address line 2'],
     maxLength: [20, 'alphanumeric maximum 20 characters'],
+    validate: {
+      validator: function (value) {
+        return /^[a-zA-Z0-9]+$/.test(value);
+      },
+      message: 'Address line 2 should contain alphanumeric characters only'
+    },
   },
-  City: {
+  city: {
     type: String,
     required: [true, 'Please enter city'],
-    maxLength: [20, 'alphanumeric maximum 20 characters'],
+    maxLength: [20, 'City should not exceed 20 characters'],
+    validate: {
+      validator: function (value) {
+        return /^[a-zA-Z0-9\s]+$/.test(value);
+      },
+      message: 'City should contain alphanumeric characters only'
+    },
   },
   Code: {
     type: String,
     required: [true, 'Please enter your zip code'],
     maxLength: [10, 'alphanumeric maximum 10 characters'],
-  },
-  UploadPhoto: {
-    type:String,
-    required: [true, 'Please upload a photo'],
     validate: {
       validator: function (value) {
-        return /\.(jpg|jpeg|png)$/i.test(value);
+        return /^[a-zA-Z0-9]+$/.test(value);
       },
-      message: 'Invalid file format. Please upload an image file (JPG, JPEG, PNG)'
-    }
+      message: 'Code should contain alphanumeric characters only'
+    },
   },
+ 
 });
 
 module.exports = mongoose.model('User', userSchema);
