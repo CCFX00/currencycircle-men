@@ -2,6 +2,7 @@ const User = require('../models/userModel')
 const ErrorHandler = require('../utils/ErrorHandler')
 const catchAsyncErrors = require('../middleware/catchAsyncErrors')
 const Features = require('../utils/Features')
+const { uploadFile } = require('../utils/uploadFile')
 
 // Getting all users
 exports.getAllUsers = catchAsyncErrors(async (req, res) => {
@@ -76,4 +77,19 @@ exports.createUser = catchAsyncErrors(async (req, res) => {
         success: true,
         user
     })
+})
+
+// Uploading user files to Google Drive
+exports.fileUpload = catchAsyncErrors(async (req, res) => {
+    try {
+        const { files } = req;
+        for (let f = 0; f < files.length; f += 1) {
+            await uploadFile(files[f]);
+        }
+        res.status(200).json({
+            message: 'File(s) uploaded successfully'
+        });
+    } catch (f) {
+        res.send(f.message);
+    }
 })

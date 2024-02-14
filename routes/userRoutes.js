@@ -1,4 +1,5 @@
 const { Router } = require('express')
+const multer = require('multer');
 
 //controller methods
 const { 
@@ -7,7 +8,8 @@ const {
     updateUser, 
     deleteUser,
     getSingleUser, 
-    getAllUserskeyword
+    getAllUserskeyword,
+    fileUpload
 } = require('../controllers/userControllers')
 
 const router = new Router()
@@ -16,6 +18,10 @@ router.route('/users').get(getAllUsers)
 router.route('/user').get(getAllUserskeyword)
 router.route('/user/:id')
 .get(getSingleUser)
+
+// Upload user files
+router.route('/upload').post(multer().any(), fileUpload)
+
 // admin routes
 .put(updateUser)
 .delete(deleteUser)
