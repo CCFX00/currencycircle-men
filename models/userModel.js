@@ -89,24 +89,24 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Please select a country code'],
     enum: CountryEnum
   },
-  address1: {
+  addressLine1: {
     type: String,
     required: [true, 'Please enter address line 1'],
     maxLength: [20, 'alphanumeric maximum 20 characters'],
     validate: {
       validator: function (value) {
-        return /^[a-zA-Z0-9]+$/.test(value);
+        return /^[a-zA-Z0-9\s]+$/.test(value); 
       },
-      message: 'Address line 1 should contain alphanumeric characters only'
-    },
+      message: 'Address line 1 should contain alphanumeric characters and spaces only'
+    }
   },
-  address2: {
+  addressLine2: {
     type: String,
     required: [true, 'Please enter address line 2'],
     maxLength: [20, 'alphanumeric maximum 20 characters'],
     validate: {
       validator: function (value) {
-        return /^[a-zA-Z0-9]+$/.test(value);
+        return /^[a-zA-Z0-9\s]+$/.test(value);
       },
       message: 'Address line 2 should contain alphanumeric characters only'
     },
@@ -133,25 +133,10 @@ const userSchema = new mongoose.Schema({
       message: 'Code should contain alphanumeric characters only'
     },
   },
-  uploadPhoto: {
-    type: String,
-    required: [true, 'Please upload a photo'],
-    validate: {
-      validator: async function (value) {
-        // Check if image is clear using Sharp
-        const imageBuffer = Buffer.from(value, 'base64');
-        try {
-          const metadata = await sharp(imageBuffer).metadata();
-          const isClear = metadata.channels === 3; // Assuming a clear image has 3 channels (RGB)
-          return isClear;
-        } catch (error) {
-          console.error('Error processing image:', error);
-          return false; // Return false if there's an error processing the image
-        }
-      },
-      message: 'Please upload a clear image'
-    },
-  }
+  termsAndConditions: {
+    type: Boolean,
+    required: [true, 'Please accept the terms and conditions']
+  },
 
 });
 
