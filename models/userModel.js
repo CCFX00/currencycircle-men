@@ -133,7 +133,26 @@ const userSchema = new mongoose.Schema({
       message: 'Code should contain alphanumeric characters only'
     },
   },
- 
+  uploadPhoto: {
+    type: String,
+    required: [true, 'Please upload a photo'],
+    validate: {
+      validator: async function (value) {
+        // Check if image is clear using Sharp
+        const imageBuffer = Buffer.from(value, 'base64');
+        try {
+          const metadata = await sharp(imageBuffer).metadata();
+          const isClear = metadata.channels === 3; // Assuming a clear image has 3 channels (RGB)
+          return isClear;
+        } catch (error) {
+          console.error('Error processing image:', error);
+          return false; // Return false if there's an error processing the image
+        }
+      },
+      message: 'Please upload a clear image'
+    },
+  }
+
 });
 
 module.exports = mongoose.model('User', userSchema);
