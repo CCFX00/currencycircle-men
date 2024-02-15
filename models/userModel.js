@@ -5,7 +5,7 @@ const emailValidator = function (value) {
   return value.includes('@') && value.includes('.');
 };
 const CountryCodeEnum = {
-  values: ['+1', '+44', '+49', '+33', '+34', '+39', '+81'],
+  values: ['+1', '+44', '+49', '+33', '+34', '+39', '+81', '+87', '+27'],
   message: 'Please select a valid country code'
 };
 const CountryEnum = {
@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema({
         return ['Mr', 'Mrs', 'Ms', 'Miss'].includes(value);
       },
       message: 'Invalid Title. Must be one of: Mr, Mrs, Ms, Miss'
-    }
+    },
   },
   name: {
     type: String,
@@ -49,7 +49,7 @@ const userSchema = new mongoose.Schema({
   profession: {
     type: String,
     required: [true, 'Please enter your profession'],
-    maxLength: [15, 'Enter ma']
+    maxLength: [15, 'Enter a maximum of 15 characters'],
   },
   email: {
     type: String,
