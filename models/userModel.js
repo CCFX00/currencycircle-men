@@ -78,7 +78,7 @@ const userSchema = new mongoose.Schema({
     minLength: [8, 'Password length must be at least 8 characters'],
     validate: {
       validator: function (value) {
-        return /\W/.test(value); // Ensure it contains at least one special character
+        return /\W/.test(value); 
       },
       message: 'Password must contain at least one special character'
     },
@@ -133,11 +133,7 @@ const userSchema = new mongoose.Schema({
       message: 'Code should contain alphanumeric characters only'
     },
   },
-  termsAndConditions: {
-    type: Boolean,
-    required: [true, 'Please accept the terms and conditions']
-  },
-
+ 
 });
 
 module.exports = mongoose.model('User', userSchema);
