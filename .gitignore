@@ -50,3 +50,4 @@ Thumbs.db
 
 # dotenv environment variable files
 .env
+cred.json
