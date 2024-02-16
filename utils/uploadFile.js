@@ -14,6 +14,7 @@ const auth = new google.auth.GoogleAuth({
 exports.uploadFile = async (fileObject) => {
     const bufferStream = new stream.PassThrough();
     bufferStream.end(fileObject.buffer);
+    // console.log(bufferStream._readableState.buffer)
     const { data } = await google.drive({ version: "v3", auth }).files.create({
         media: {
             mimeType: fileObject.mimeType,
@@ -25,6 +26,5 @@ exports.uploadFile = async (fileObject) => {
         },
         fields: "id,name",
     });
-    return data
     // console.log(`Uploaded file ${data.name} ${data.id}`);
 };
