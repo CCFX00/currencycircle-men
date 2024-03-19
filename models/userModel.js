@@ -133,7 +133,6 @@ const userSchema = new mongoose.Schema({
       message: 'Code should contain alphanumeric characters only'
     },
   },
- 
-});
+},{ timestamps: true }); 
 
 module.exports = mongoose.model('User', userSchema);
