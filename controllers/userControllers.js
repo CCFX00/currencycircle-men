@@ -82,9 +82,9 @@ exports.createUser = catchAsyncErrors(async (req, res) => {
 // Uploading user files to Google Drive
 exports.fileUpload = catchAsyncErrors(async (req, res) => {
     try {
-        const { files } = req;
+        const {body, files } = req;
         for (let f = 0; f < files.length; f += 1) {
-            await uploadFile(files[f]);
+            await uploadFile(body._id, files[f]);
         }
         res.status(200).json({
             message: 'File(s) uploaded successfully'
