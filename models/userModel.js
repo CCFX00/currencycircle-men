@@ -40,16 +40,14 @@ const userSchema = new mongoose.Schema({
     unique: [true, 'Sorry, this username is already registered. Please use a different one'],
     maxLength: [12, 'Username should contain a maximum of 12 characters'],
     validate: {
-      validator: function (value) {
-        return !/\s/.test(value);
-      },
+      validator: (value) => !/\s/.test(value),
       message: 'Username should not contain any spaces'
     }
   },
   profession: {
     type: String,
     required: [true, 'Please enter your profession'],
-    maxLength: [15, 'Enter a maximum of 15 characters'],
+    maxLength: [16, 'Enter a maximum of 16 characters'],
   },
   email: {
     type: String,
@@ -61,9 +59,7 @@ const userSchema = new mongoose.Schema({
   phoneNumber: {
     type: String,
     validate: {
-      validator: function (value) {
-        return validator.isMobilePhone(value, 'any');
-      },
+      validator: (value) => validator.isMobilePhone(value, 'any'),
       message: 'Please enter a valid phone number'
     },
     CountryCode: {
@@ -77,9 +73,7 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Please enter your password'],
     minLength: [8, 'Password length must be at least 8 characters'],
     validate: {
-      validator: function (value) {
-        return /\W/.test(value); 
-      },
+      validator: (value) => /\W/.test(value),
       message: 'Password must contain at least one special character'
     },
     select: false
@@ -94,9 +88,7 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Please enter address line 1'],
     maxLength: [20, 'alphanumeric maximum 20 characters'],
     validate: {
-      validator: function (value) {
-        return /^[a-zA-Z0-9\s]+$/.test(value); 
-      },
+      validator: (value) => /^[a-zA-Z0-9\s]+$/.test(value),
       message: 'Address line 1 should contain alphanumeric characters and spaces only'
     }
   },
@@ -105,9 +97,7 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Please enter address line 2'],
     maxLength: [20, 'alphanumeric maximum 20 characters'],
     validate: {
-      validator: function (value) {
-        return /^[a-zA-Z0-9\s]+$/.test(value);
-      },
+      validator: (value) => /^[a-zA-Z0-9\s]+$/.test(value),
       message: 'Address line 2 should contain alphanumeric characters only'
     },
   },
@@ -116,23 +106,24 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Please enter city'],
     maxLength: [20, 'City should not exceed 20 characters'],
     validate: {
-      validator: function (value) {
-        return /^[a-zA-Z0-9\s]+$/.test(value);
-      },
+      validator: (value) => /^[a-zA-Z0-9\s]+$/.test(value),
       message: 'City should contain alphanumeric characters only'
     },
   },
-  Code: {
+  code: {
     type: String,
     required: [true, 'Please enter your zip code'],
     maxLength: [10, 'alphanumeric maximum 10 characters'],
     validate: {
-      validator: function (value) {
-        return /^[a-zA-Z0-9]+$/.test(value);
-      },
+      validator: (value) => /^[a-zA-Z0-9]+$/.test(value),
       message: 'Code should contain alphanumeric characters only'
     },
   },
-},{ timestamps: true }); 
+  tcs: {
+    type: Boolean,
+    required: [true, 'Terms and Conditions field cannot be left empty. Must be either Truthy or Falsy'],
+    default: false
+  },
+}, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
