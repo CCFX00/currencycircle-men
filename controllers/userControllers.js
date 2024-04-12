@@ -84,7 +84,7 @@ exports.fileUpload = catchAsyncErrors(async (req, res) => {
     try {
         const { files } = req;
         for (let f = 0; f < files.length; f += 1) {
-            await uploadFile(files[f]);
+            await uploadFile(req, files[f]);
         }
         res.status(200).json({
             message: 'File(s) uploaded successfully'
