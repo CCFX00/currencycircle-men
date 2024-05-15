@@ -3,6 +3,7 @@ const ErrorHandler = require('../utils/ErrorHandler')
 const catchAsyncErrors = require('../middleware/catchAsyncErrors')
 const Features = require('../utils/Features')
 const { uploadFile } = require('../utils/uploadFile')
+const { checkTsCs } = require('../utils/checkTsCs')
 
 // Getting all users
 exports.getAllUsers = catchAsyncErrors(async (req, res) => {
@@ -70,13 +71,19 @@ exports.getSingleUser = catchAsyncErrors(async (req, res, next) => {
 // user authentication (Creating new user, login User, logout user)
 
 // Creating new user
-exports.createUser = catchAsyncErrors(async (req, res) => {
-    const user = await User.create(req.body)
+exports.createUser = catchAsyncErrors(async (req, res, next) => {
+    const { tcs } = req.body
 
-    res.status(200).json({
-        success: true,
-        user
-    })
+    if(!tcs === true){
+        checkTsCs(res)
+    }else{
+        const user = await User.create(req.body)    
+
+        res.status(200).json({
+            success: true,
+            user
+        })
+    }
 })
 
 // Uploading user files to Google Drive
