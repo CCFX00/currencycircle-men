@@ -13,9 +13,11 @@ middlewareSetup(app)
 //importing routes
 const userRoutes = require('./routes/userRoutes')
 const ssoGoogleRoutes = require('./routes/ssoRoutes')
+const deviceInfoRoutes = require('./routes/deviceInfoRoutes')
 
 app.use('/ccfx/api/v1', userRoutes)
 app.use('/ccfx/api/v1', ssoGoogleRoutes)
+app.use('/ccfx/api/v1', deviceInfoRoutes)
 
 app.use(ErrorHandler)
 
