@@ -11,7 +11,7 @@ const TermsAndConditions = mongoose.model('TermsAndCondition', termsAndCondition
 
 const initialTermsAndConditions = {
   title: "Terms and Conditions",
-  content: "These are the Terms and Conditions of the service. Please read them carefully.",
+  content: "These are the Terms and Conditions of the service. Please read them carefully. If not you are not allowed to use our app. Thanks",
   version: "1.0",
   updated_at: Date.now()
 };
