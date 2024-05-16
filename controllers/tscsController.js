@@ -1,17 +1,7 @@
 const TermsAndConditions = require('../models/termsandconditionsModel');
 const User = require ('../models/userModel');
 
-const tscsRegister = async (req, res) => {
-    try {
-        const tcs = new TermsAndConditions(req.body);
-        await tcs.save();
-        res.json({ message: 'tcs registered successfully' });
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to register tcs' });
-    }
-};
-
-const tscsUpdate = async (req, res) => {
+const tscsReg = async (req, res) => {
     try {
         const { title, content, version } = req.body;
         const terms = await TermsAndConditions.findOne();
@@ -25,12 +15,12 @@ const tscsUpdate = async (req, res) => {
             await terms.save();
 
             // Notify all users to confirm the updated terms and conditions
-            await UserModel.updateMany({}, { $set: { confirmedTermsAndConditions: false } });
+            await User.updateMany({}, { $set: { tcs: false } });
             return res.json({ message: 'Terms and conditions updated. All users must confirm the updated terms and conditions.' });
         } else if (!terms) {
             // Create new terms and conditions
             await TermsAndConditions.create({ title, content, version });
-            return res.json({ message: 'Terms and conditions updated successfully' });
+            return res.json({ message: 'Terms and conditions created successfully' });
         } else {
             // No changes to the terms and conditions
             return res.json({ message: 'Terms and conditions are up-to-date' });
@@ -54,7 +44,6 @@ const tscsGet = async (req, res) => {
 };
 
 module.exports = {
-    tscsRegister,
-    tscsUpdate,
+    tscsReg,
     tscsGet
 }
