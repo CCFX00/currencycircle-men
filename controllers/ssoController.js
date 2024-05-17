@@ -30,14 +30,6 @@ exports.loginSuccess = async (req, res) => {
     })
 }
 
-exports.logoutUser = (req, res) => {
-    req.session.destroy();
-    res.status(200).json({
-        success: true,
-        message: `User logged out successfully`
-    })
-}
-
 exports.notFound = (req, res) => {
     res.status(401).json({
         success: false,

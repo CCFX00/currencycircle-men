@@ -76,7 +76,7 @@ const verifyRefreshToken = async (tkn) => {
 const renewAccessToken = (res, decoded) => {
     generateAccessToken(decoded).then(token => {
         // console.log(token)
-        res.cookie('access_token', token, { expires: new Date(Date.now() + 1 * 60 * 1000), httpOnly: true })
+        res.cookie('access_token', token, { expires: new Date(Date.now() + 5 * 60 * 1000), httpOnly: true })
         return token
     }).catch((error) => {
         return {
