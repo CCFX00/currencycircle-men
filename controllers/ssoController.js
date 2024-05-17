@@ -1,6 +1,7 @@
 const passport = require("passport");
 const User = require('../models/userModel')
-const { sendToken, renewAccessToken, getResetPasswordToken } = require('../utils/cookies-JWT') 
+const { sendToken } = require('../utils/cookies-JWT')
+const { checkTsCs } = require('../utils/checkTsCs') 
 
 
 exports.oAuth = passport.authenticate("google", { scope: ["profile", "email"] })
@@ -22,12 +23,20 @@ exports.loginSuccess = async (req, res) => {
         })
     }
 
-    await sendToken(user, res)
+    const { success, message } = checkTsCs(user)
 
-    return res.status(200).json({
-        success: true,
-        message: `CCFX User ${user.name} logged in successfully`
-    })
+    if(success === false){
+        res.status(401).json({
+            success: success,
+            message: message
+        })
+    }else{
+        await sendToken(user, res)
+    
+        res.status(200).json({
+            message: "User logged in successfully"
+        })
+    } 
 }
 
 exports.notFound = (req, res) => {

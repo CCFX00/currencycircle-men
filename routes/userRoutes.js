@@ -21,13 +21,11 @@ router.route('/users').get(isAuthenticatedUser, getAllUsers)
 router.route('/user').get(isAuthenticatedUser, getAllUserskeyword)
 router.route('/user/:id')
 .get(isAuthenticatedUser, getSingleUser)
+.put(isAuthenticatedUser, updateUser)
+.delete(isAuthenticatedUser, deleteUser)
 
 // Upload user files
 router.route('/upload').post(multer().any(), fileUpload)
-
-// admin routes
-.put(isAuthenticatedUser, updateUser)
-.delete(isAuthenticatedUser, deleteUser)
 
 // auth routes
 router.route('/signup').post(createUser)

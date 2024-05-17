@@ -75,18 +75,23 @@ exports.getSingleUser = catchAsyncErrors(async (req, res, next) => {
 
 // Creating new user
 exports.createUser = catchAsyncErrors(async (req, res, next) => {
-    const { tcs } = req.body
+    const { success, message } = checkTsCs(req)
 
-    if(!tcs === true){
-        checkTsCs(res)
+    if(success === false){
+        res.status(401).json({
+            success: success,
+            message: message
+        })
     }else{
+        req.body.password = await encryptValue(req.body.password)
         const user = await User.create(req.body)    
 
         res.status(200).json({
             success: true,
+            message: `User ${user.userName}, has been created successfully`,
             user
-        })
-    }
+        })   
+    }   
 })
 
 // Uploading user files to Google Drive
@@ -102,19 +107,6 @@ exports.fileUpload = catchAsyncErrors(async (req, res) => {
     } catch (f) {
         res.send(f.message);
     }
-})
-
-// user authentication (Creating new user, login User, logout user)
-
-// Creating new user
-exports.createUser = catchAsyncErrors(async (req, res) => {
-    req.body.password = await encryptValue(req.body.password)
-    const user = await User.create(req.body)
-
-    res.status(200).json({
-        message: `User ${user.userName} created successfully`,
-        user
-    })
 })
 
 // login User
@@ -137,11 +129,20 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
         return next(new ErrorHandler('Password entered is incorrect', 401))
     }
 
-    await sendToken(user, res)
+    const { success, message } = checkTsCs(user)
+
+    if(success === false){
+        res.status(401).json({
+            success: success,
+            message: message
+        })
+    }else{
+        await sendToken(user, res)
     
-    res.status(200).json({
-        message: "User logged in successfully"
-    })
+        res.status(200).json({
+            message: "User logged in successfully"
+        })
+    }    
 })
 
 // logout user
