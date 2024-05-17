@@ -46,17 +46,29 @@ const tscsGet = async (req, res) => {
     }
 };
 
-const updateUserTsCsStatus = async(req, res) => {
+const falsyAllUserTsCsStatus = async(req, res) => {
     try{
         await User.updateMany({}, { $set: { tcs: false } });
-        res.json({ message: 'User tcs status updated successfully' });        
+        res.json({ message: "All users' tcs status updated successfully to false" });        
     }catch(err){
         res.status(500).json({ error: "Failed to update Users' tcs property" });
+    }
+}
+
+const truthyUserTsCsStatus = async(req, res) => {
+    try{
+        const { email } = req.body
+        const usr = await User.findOne({ email })
+        await usr.updateOne({ tcs: true})
+        res.status(200).json({message: `User ${usr.userName} has successfully accepted terms and conditions`})
+    }catch(err){
+        res.status(500).json({ error: "Failed to update User's tcs property" });
     }
 }
 
 module.exports = {
     tscsReg,
     tscsGet,
-    updateUserTsCsStatus
+    falsyAllUserTsCsStatus,
+    truthyUserTsCsStatus
 }
