@@ -1,4 +1,7 @@
 const passport = require("passport");
+const User = require('../models/userModel')
+const { sendToken } = require('../utils/cookies-JWT')
+const { checkTsCs } = require('../utils/checkTsCs') 
 
 
 exports.oAuth = passport.authenticate("google", { scope: ["profile", "email"] })
@@ -10,25 +13,35 @@ exports.oAuthRedirectCallback = (req, res) => {
     res.redirect("/ccfx/api/v1/oauth");
 }
 
-exports.loginSuccess = (req, res) => {
-    let name = req.user.displayName;
-    res.status(200).json({
-        success: true,
-        message: `CCFX User ${name} logged in successfully`
-    })
-}
+exports.loginSuccess = async (req, res) => {
+    const user = await User.findOne({email: req.user._json.email})
 
-exports.logoutUser = (req, res) => {
-    req.session.destroy();
-    res.status(200).json({
-        success: true,
-        message: `User logged out successfully`
-    })
+    if(!user){
+        return res.status(404).json({
+            success: false,
+            message: "User not found in our database. Please sign up first"
+        })
+    }
+
+    const { success, message } = checkTsCs(user)
+
+    if(success === false){
+        res.status(401).json({
+            success: success,
+            message: message
+        })
+    }else{
+        await sendToken(user, res)
+    
+        res.status(200).json({
+            message: "User logged in successfully"
+        })
+    } 
 }
 
 exports.notFound = (req, res) => {
     res.status(401).json({
         success: false,
-        message: "OAuth Authentication failed, please try again"
+        message: "OAuth Authentication failed [Error recieving user], please try again"
     })
 }

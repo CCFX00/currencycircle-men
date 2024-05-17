@@ -22,10 +22,3 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser((user, done) => {
   done(null, user)
 })
-
-
-// function(request, accessToken, refreshToken, profile, done) {
-//   User.findOrCreate({}, function(err, user){
-//     return done(err, user);
-//   })
-// }

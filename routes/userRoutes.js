@@ -9,24 +9,27 @@ const {
     deleteUser,
     getSingleUser, 
     getAllUserskeyword,
-    fileUpload
+    fileUpload,
+    loginUser,
+    logoutUser
 } = require('../controllers/userControllers')
+const { isAuthenticatedUser } = require("../middleware/auth");
 
 const router = new Router()
 
-router.route('/users').get(getAllUsers)
-router.route('/user').get(getAllUserskeyword)
+router.route('/users').get(isAuthenticatedUser, getAllUsers)
+router.route('/user').get(isAuthenticatedUser, getAllUserskeyword)
 router.route('/user/:id')
-.get(getSingleUser)
+.get(isAuthenticatedUser, getSingleUser)
+.put(isAuthenticatedUser, updateUser)
+.delete(isAuthenticatedUser, deleteUser)
 
 // Upload user files
 router.route('/upload').post(multer().any(), fileUpload)
 
-// admin routes
-.put(updateUser)
-.delete(deleteUser)
-
 // auth routes
 router.route('/signup').post(createUser)
+router.route('/login').post(loginUser)
+router.route('/logout').get(logoutUser)
 
 module.exports = router
