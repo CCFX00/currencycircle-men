@@ -4,11 +4,12 @@ const catchAsyncErrors = require('../middleware/catchAsyncErrors')
 const Features = require('../utils/Features')
 const { uploadFile } = require('../utils/uploadFile')
 const { encryptValue, decryptValue } = require('../utils/hashingLogic')
-const { sendToken, getResetPasswordToken } = require('../utils/cookies-JWT')
+const { sendToken } = require('../utils/cookies-JWT')
 const UserToken = require("../models/userTokenModel"); 
 const { checkTsCs } = require('../utils/checkTsCs')
-const { sendOTP, verifyOTP, resendOTP } = require('../utils/otpLogic')
-const { sendMail } = require('../utils/sendMail')
+const { genOTP, sendOTP, verifyOTP, resendOTP } = require('../utils/otpLogic')
+const { sendMail, genMail } = require('../utils/sendMail')
+const crypto = require("crypto");
 
 // Getting all users
 exports.getAllUsers = catchAsyncErrors(async (req, res) => {
@@ -192,5 +193,94 @@ exports.resendOTPCode = catchAsyncErrors(async(req, res, next) => {
     const verificationStatus = await resendOTP(req.body)
     res.status(200).json({
         verificationStatus
+    })
+})
+
+// Forgot password
+exports.forgotPassword = catchAsyncErrors(async(req, res, next) => {
+    const user = await User.findOne({email: req.body.email})
+
+    if(!user){
+        return next(new ErrorHandler('User not found with this email address', 404))
+    }
+
+    const { otp } = await genOTP()
+    const hashedOTP =  crypto.createHash("sha256").update(otp).digest("hex")
+
+    user.resetPasswordToken = hashedOTP
+    user.resetPasswordTime = Date.now() + 15 * 60 * 1000
+
+    await user.save({
+        validateBeforeSave: false
+    })
+
+    try{
+        let content = {
+            body: {
+                name: `${user.userName}`,
+                intro: `Here's your Currency Circle FX reset password token`,
+                outro: `<p>Please use code below to reset your password:</p>
+                <p><br/><strong><h1 style="text-align: center;">${otp}</h1></strong></p>
+                <p><br/>Code valid for <b>15 minutes.</b></p>
+                <p>Please keep it safe, do not share it with anyone</p>
+                `
+            }
+        };
+
+        let mail = await genMail(content)
+
+        let mssg = {
+            email: user.email,
+            subject: "CCFX Password Recovery",
+            message: mail
+        }
+
+        await sendMail(mssg)
+
+        res.json({
+            success: true,
+            message: `email sent to ${user.email} successfully`
+        })
+        
+    }catch(e){
+        user.resetPasswordToken = undefined
+        user.resetPasswordTime = undefined
+
+        await user.save({
+            validateBeforeSave: false
+        })
+
+        return next(new ErrorHandler(e.message, 500))
+    }
+})
+
+// Reset Password
+exports.resetPassword = catchAsyncErrors(async(req, res, next) => {
+    let otp = req.body.otp
+    hashedOTP = crypto.createHash("sha256").update(otp).digest("hex")
+
+    const user = await User.findOne({
+        resetPasswordToken: hashedOTP,
+        resetPasswordTime: {  $gt: Date.now() }
+    })
+
+    if (!user) {
+        return next(new ErrorHandler("Reset Token is invalid or expired. Please try again."))
+    }
+    
+    if (req.body.password !== req.body.confirmPassword){
+        return next(new ErrorHandler("Password fields do not match. Please try again."))
+    }
+
+    user.password = await encryptValue(req.body.password)
+
+    user.resetPasswordToken = undefined
+    user.resetPasswordTime = undefined
+
+    await user.save()
+
+    res.status(200).json({
+        status: 'success',
+        massage: "Password reset successfully"
     })
 })

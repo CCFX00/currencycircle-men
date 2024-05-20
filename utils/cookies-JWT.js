@@ -16,12 +16,7 @@ const sendToken = async(user, res) => {
     }
 }
 
-const getResetPasswordToken = async(user) => {
-    return await getResetToken(user)
-}
-
 
 module.exports = {
-    sendToken,
-    getResetPasswordToken
+    sendToken
 }

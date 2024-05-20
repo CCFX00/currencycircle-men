@@ -86,28 +86,9 @@ const renewAccessToken = (res, decoded) => {
     })
 }
 
-//Generate reset password token
-const getResetToken = async(user) => {
-    try{
-        //generating reset password token
-        const resetToken = crypto.randomBytes(20).toString("hex")
-
-        //hashing and adding reset password token to user schema
-        user.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex")
-        user.resetPasswordTime = Date.now() + 15 * 60 * 1000
-
-        return resetToken
-    }catch(err){
-        return {
-            message: err.message
-        }
-    }
-}
-
 module.exports = {
     generateAccessToken,
     generateRefreshToken,
     verifyRefreshToken,    
-    renewAccessToken,
-    getResetToken
+    renewAccessToken
 }

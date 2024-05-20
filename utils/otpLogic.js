@@ -4,18 +4,27 @@ const verificationOTPModel = require('../models/verificationOTPModel');
 const User = require('../models/userModel')
 const { sendMail, genMail } = require('./sendMail') 
 
+// Generate OTP
+const genOTP = async() => {
+    const otp = `${Math.floor(1000 + Math.random() * 9000)}`    
+    return { otp }
+}
+
 // Send OTP
 const sendOTP = async(user) => {
     try{
-        //generating OTP
-        const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
+        const { otp } = await genOTP()
+        const hashedOTP = await encryptValue(otp)
 
         let content = {
             body: {
                 name: `${user.userName}`,
                 intro: 'Welcome to Currency Circle FX',
-                outro: `<p>Please enter <b>${otp}</b> in the app to verify your email and continue the signup process.</p>
-                <p>This code will <b>expire in 1 hour</b></p>`
+                outro: `<p>Please use code below to verify your account:</p>
+                <p><br/><strong><h1 style="text-align: center;">${otp}</h1></strong></p>
+                <p><br/>Code valid for <b>1 hour</b></p>
+                <p>Please keep it safe, do not share it with anyone</p>                
+                `
             }
         };
 
@@ -27,7 +36,6 @@ const sendOTP = async(user) => {
             message: mail
         }
 
-        const hashedOTP = await encryptValue(otp)
         const newOTPVerification = await VerificationOTP({
             userEmail: user.email,
             otp: hashedOTP,
@@ -123,6 +131,7 @@ const resendOTP = async({ email }) => {
 }
 
 module.exports = {
+    genOTP,
     sendOTP,
     verifyOTP,
     resendOTP

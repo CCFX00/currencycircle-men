@@ -37,7 +37,7 @@ router.route('/login').post(loginUser)
 router.route('/logout').get(logoutUser)
 router.route('/verify').post(verifyUserOTP)
 router.route('/resendOTP').post(resendOTPCode)
-// router.route('/password/forgot').post(forgotPassword)
-// router.route('/password/reset/:token').put(resetPassword)
+router.route('/password/forgot').post(forgotPassword)
+router.route('/password/reset').put(resetPassword)
 
 module.exports = router
