@@ -7,6 +7,8 @@ const { encryptValue, decryptValue } = require('../utils/hashingLogic')
 const { sendToken, getResetPasswordToken } = require('../utils/cookies-JWT')
 const UserToken = require("../models/userTokenModel"); 
 const { checkTsCs } = require('../utils/checkTsCs')
+const { sendOTP, verifyOTP, resendOTP } = require('../utils/otpLogic')
+const { sendMail } = require('../utils/sendMail')
 
 // Getting all users
 exports.getAllUsers = catchAsyncErrors(async (req, res) => {
@@ -77,22 +79,32 @@ exports.getSingleUser = catchAsyncErrors(async (req, res, next) => {
 exports.createUser = catchAsyncErrors(async (req, res, next) => {
     const { success, message } = checkTsCs(req)
 
-    if(success === false){
+    if(!success === true){
         res.status(401).json({
-            success: success,
-            message: message
+            success,
+            message
         })
     }else{
-        req.body.password = await encryptValue(req.body.password)
-        const user = await User.create(req.body)    
+        const foundUser = await User.findOne({  email: req.body.email })
 
-        res.status(200).json({
-            success: true,
-            message: `User ${user.userName}, has been created successfully`,
-            user
-        })   
+        if(!foundUser){
+            req.body.password = await encryptValue(req.body.password)
+            const user = await User.create(req.body)   
+            const otp = await sendOTP(user)
+
+            res.status(201).json({
+                success: true,
+                message: `User ${user.userName}, has been created successfully`,
+                otp
+            }) 
+        }else{
+            res.status(400).json({
+                success: false,
+                message: "User with the provided email already exists in the database"
+            })
+        }          
     }   
-})
+}) 
 
 // Uploading user files to Google Drive
 exports.fileUpload = catchAsyncErrors(async (req, res) => {
@@ -164,5 +176,21 @@ exports.logoutUser = catchAsyncErrors(async(req, res, next) => {
     res.status(200).json({
         success: true,
         message: `User logged out successfully`
+    })
+})
+
+// verify user account with OTP
+exports.verifyUserOTP = catchAsyncErrors(async(req, res, next) => {
+    const verificationStatus = await verifyOTP(req.body)
+    res.status(200).json({
+        verificationStatus
+    })
+})
+
+// resend OTP verification code
+exports.resendOTPCode = catchAsyncErrors(async(req, res, next) => {
+    const verificationStatus = await resendOTP(req.body)
+    res.status(200).json({
+        verificationStatus
     })
 })
