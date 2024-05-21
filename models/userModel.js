@@ -121,9 +121,15 @@ const userSchema = new mongoose.Schema({
   },
   tcs: {
     type: Boolean,
-    required: [true, 'Terms and Conditions field cannot be left empty. Must be either Truthy or Falsy'],
+    required: [true, 'Terms and Conditions field cannot be left empty. Value must either be either true or false'],
     default: false
   },
+  verified: {
+    type: Boolean,
+    default: false
+  },
+  resetPasswordToken: String,
+  resetPasswordTime: Date
 }, { timestamps: true });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model('User', userSchema); 

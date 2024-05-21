@@ -11,7 +11,11 @@ const {
     getAllUserskeyword,
     fileUpload,
     loginUser,
-    logoutUser
+    logoutUser,
+    verifyUserOTP,
+    resendOTPCode,
+    forgotPassword,
+    resetPassword
 } = require('../controllers/userControllers')
 const { isAuthenticatedUser } = require("../middleware/auth");
 
@@ -31,5 +35,9 @@ router.route('/upload').post(multer().any(), fileUpload)
 router.route('/signup').post(createUser)
 router.route('/login').post(loginUser)
 router.route('/logout').get(logoutUser)
+router.route('/verify').post(verifyUserOTP)
+router.route('/resendOTP').post(resendOTPCode)
+router.route('/password/forgot').post(forgotPassword)
+router.route('/password/reset').put(resetPassword)
 
 module.exports = router
