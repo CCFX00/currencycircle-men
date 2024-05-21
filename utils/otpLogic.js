@@ -116,7 +116,7 @@ const resendOTP = async({ email }) => {
             }else{
                 return {
                     success: false,
-                    message: `User ${user.userName} is already a verified user`
+                    message: `User ${user.userName}, with email: ${user.email}, is already a verified user`
                 }
             } 
         }else{

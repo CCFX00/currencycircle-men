@@ -1,11 +1,9 @@
 const jwt = require("jsonwebtoken");
 const UserToken = require("../models/userTokenModel");
-const crypto = require("crypto");
 
 const generateAccessToken = async(user) => {
     try{          
         const accessToken = jwt.sign({ id: user.id, email: user.email }, process.env._JWT_ACCESS_SECRET_KEY, {
-        // expiresIn: process.env._JWT_ACCESS_EXPIRATION,
         expiresIn: process.env._JWT_ACCESS_EXPIRATION
         });
 
@@ -21,7 +19,6 @@ const generateAccessToken = async(user) => {
 const generateRefreshToken = async (user) => {
     try {      
         const refreshToken = jwt.sign({ id: user._id, email: user.email }, process.env._JWT_REFRESH_SECRET_KEY, {
-            // expiresIn: process.env._JWT_REFRESH_EXPIRATION,
             expiresIn: process.env._JWT_REFRESH_EXPIRATION
         }); 
 
@@ -75,7 +72,6 @@ const verifyRefreshToken = async (tkn) => {
 
 const renewAccessToken = (res, decoded) => {
     generateAccessToken(decoded).then(token => {
-        // console.log(token)
         res.cookie('access_token', token, { expires: new Date(Date.now() + 5 * 60 * 1000), httpOnly: true })
         return token
     }).catch((error) => {
