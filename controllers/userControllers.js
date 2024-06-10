@@ -10,6 +10,7 @@ const { checkTsCs } = require('../utils/checkTsCs')
 const { genOTP, sendOTP, verifyOTP, resendOTP } = require('../utils/otpLogic')
 const { sendMail, genMail } = require('../utils/sendMail')
 const crypto = require("crypto");
+const verifyUser = require('../utils/isVerified')
 
 // Getting all users
 exports.getAllUsers = catchAsyncErrors(async (req, res) => {
@@ -95,7 +96,11 @@ exports.createUser = catchAsyncErrors(async (req, res, next) => {
 
             res.status(201).json({
                 success: true,
-                message: `User ${user.userName}, has been created successfully`,
+                // message: `User ${user.userName}, has been created successfully, an email containing your verificatin 
+                // code has been sent to ${user.email}, please check it out to verify your account.`,
+                message: `<p>User ${user.userName}, has been created successfully.</p>
+                <p>An email containing your verification code has been sent to ${user.email}.</p>
+                <p>Please check it out to verify your account.</p>`,
                 otp
             }) 
         }else{
@@ -108,19 +113,30 @@ exports.createUser = catchAsyncErrors(async (req, res, next) => {
 }) 
 
 // Uploading user files to Google Drive
-exports.fileUpload = catchAsyncErrors(async (req, res) => {
+exports.fileUpload = catchAsyncErrors(async (req, res, next) => {
     try {
-        const {body, files } = req;
-        for (let f = 0; f < files.length; f += 1) {
-            await uploadFile(body._id, files[f]);
+        const { body, files } = req;
+
+        if (!body || !body.email) {
+            return next(new ErrorHandler('Please provide your email', 401));
         }
+
+        if (!files || files.length === 0) {
+            return next(new ErrorHandler('Please provide your ID image', 401));
+        }
+
+        for (let f = 0; f < files.length; f += 1) {
+            await uploadFile(body.email, files[f]);
+        }
+
         res.status(200).json({
             message: 'File(s) uploaded successfully'
         });
+
     } catch (f) {
-        res.send(f.message);
+        next(new ErrorHandler(f.message, 500));
     }
-})
+});
 
 // login User
 exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
@@ -142,6 +158,8 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
         return next(new ErrorHandler('Password entered is incorrect', 401))
     }
 
+    await verifyUser(user, next)
+
     const { success, message } = checkTsCs(user)
 
     if(success === false){
@@ -153,7 +171,7 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
         await sendToken(user, res)
     
         res.status(200).json({
-            message: "User logged in successfully"
+            message: `User ${user.userName} logged in successfully`
         })
     }    
 })
@@ -164,6 +182,7 @@ exports.logoutUser = catchAsyncErrors(async(req, res, next) => {
     await UserToken.deleteOne({token: tkn})
     res.clearCookie("access_token", { expires: new Date(Date.now()), httpOnly: true })
     res.clearCookie("refresh_token", { expires: new Date(Date.now()), httpOnly: true })
+    res.clearCookie("connect.sid", { httpOnly: true });
 
     req.session.destroy((err) => {
         if(err){
@@ -182,19 +201,39 @@ exports.logoutUser = catchAsyncErrors(async(req, res, next) => {
 
 // verify user account with OTP
 exports.verifyUserOTP = catchAsyncErrors(async(req, res, next) => {
-    const verificationStatus = await verifyOTP(req.body)
-    res.status(200).json({
-        verificationStatus
-    })
-})
+    try {
+        const verificationStatus = await verifyOTP(req.body);
+        res.status(200).json({
+            success: true,
+            verificationStatus
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            status: 'FAILED',
+            message: err.message
+        });
+    }
+});
+
 
 // resend OTP verification code
-exports.resendOTPCode = catchAsyncErrors(async(req, res, next) => {
-    const verificationStatus = await resendOTP(req.body)
-    res.status(200).json({
-        verificationStatus
-    })
-})
+exports.resendOTPCode = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const verificationStatus = await resendOTP(req.body);
+        res.status(200).json({
+            success: true,
+            verificationStatus
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            status: 'FAILED',
+            message: err.message
+        });
+    }
+});
+
 
 // Forgot password
 exports.forgotPassword = catchAsyncErrors(async(req, res, next) => {
@@ -280,7 +319,7 @@ exports.resetPassword = catchAsyncErrors(async(req, res, next) => {
     await user.save()
 
     res.status(200).json({
-        status: 'success',
-        massage: "Password reset successfully"
+        success: true,
+        message: "Password reset successfully"
     })
 })

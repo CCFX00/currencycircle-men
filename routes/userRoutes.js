@@ -24,7 +24,7 @@ const router = new Router()
 router.route('/users').get(isAuthenticatedUser, getAllUsers)
 router.route('/user').get(isAuthenticatedUser, getAllUserskeyword)
 router.route('/user/:id')
-.get(isAuthenticatedUser, getSingleUser)
+.get(getSingleUser)
 .put(isAuthenticatedUser, updateUser)
 .delete(isAuthenticatedUser, deleteUser)
 

@@ -11,7 +11,7 @@ const auth = new google.auth.GoogleAuth({
     scopes: SCOPES,
 });
 
-exports.uploadFile = async (_id, fileObject) => {
+exports.uploadFile = async (email, fileObject) => {
     // Serialize the file content using Base64 encoding
     const serializedContent = fileObject.buffer.toString("base64");
 
@@ -40,7 +40,7 @@ exports.uploadFile = async (_id, fileObject) => {
         
         // Create user image document without check
         await userImg.create({ 
-            uid: _id, 
+            email: email, 
             imagePath: originalname,
             imageId: data.id,
             savedName: data.name 

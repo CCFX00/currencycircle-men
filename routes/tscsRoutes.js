@@ -9,6 +9,8 @@ router.post('/reg/tcs', tscsController.tscsReg);
 // Route to fetch terms and conditions
 router.get('/get/tcs', tscsController.tscsGet);
 
+router.get('/tcs/latest', tscsController.getLatestTcs);
+
 // Route to update Users' terms and conditions status
 router.put('/update/tcs/users', tscsController.falsyAllUserTsCsStatus);
 
