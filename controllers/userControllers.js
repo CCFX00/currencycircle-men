@@ -62,7 +62,7 @@ exports.deleteUser = catchAsyncErrors(async (req, res, next) => {
 })
 
 // Single user details
-exports.getSingleUser = catchAsyncErrors(async (req, res, next) => {
+exports.getSingleUserById = catchAsyncErrors(async (req, res, next) => {
     let user = await User.findById(req.params.id)
     if(!user){
         return next(new ErrorHandler('User is not found with this id', 404))
@@ -74,6 +74,18 @@ exports.getSingleUser = catchAsyncErrors(async (req, res, next) => {
     })
 })
 
+exports.getSingleUserByEmail = catchAsyncErrors(async (req, res, next) => {
+    const { email } = req.body
+    let user = await User.findOne({ email })
+    if(!user){
+        return next(new ErrorHandler('User is not found in our database', 404))
+    }
+  
+    res.status(200).json({
+        success: true,
+        user
+    })
+})
 
 // user authentication (Creating new user, login User, logout user)
 

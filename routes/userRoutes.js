@@ -7,7 +7,6 @@ const {
     createUser, 
     updateUser, 
     deleteUser,
-    getSingleUser, 
     getAllUserskeyword,
     fileUpload,
     loginUser,
@@ -15,16 +14,19 @@ const {
     verifyUserOTP,
     resendOTPCode,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    getSingleUserByEmail,
+    getSingleUserById
 } = require('../controllers/userControllers')
 const { isAuthenticatedUser } = require("../middleware/auth");
 
 const router = new Router()
 
 router.route('/users').get(isAuthenticatedUser, getAllUsers)
-router.route('/user').get(isAuthenticatedUser, getAllUserskeyword)
+router.route('/user/key').get(isAuthenticatedUser, getAllUserskeyword)
+router.route('/user').get(isAuthenticatedUser, getSingleUserByEmail)
 router.route('/user/:id')
-.get(getSingleUser)
+.get(isAuthenticatedUser, getSingleUserById)
 .put(isAuthenticatedUser, updateUser)
 .delete(isAuthenticatedUser, deleteUser)
 
