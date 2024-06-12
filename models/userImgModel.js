@@ -1,9 +1,12 @@
 const mongoose = require('mongoose')
+const validator = require('validator')
 
 const userImgSchema = new mongoose.Schema({
-   uid: {
-    type: String,
-    required: [true, 'Please provide user ID.']
+   email: {
+      type: String,
+      required: [true, 'Please enter an email address'],
+      validate: [validator.isEmail, 'Please enter a valid email address'],
+      lowercase: true
    },
    imagePath: {
     type: String,

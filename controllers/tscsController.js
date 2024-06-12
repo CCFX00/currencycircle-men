@@ -46,6 +46,20 @@ const tscsGet = async (req, res) => {
     }
 };
 
+const getLatestTcs = async (req, res) => {
+    try {
+        const terms = await TermsAndConditions.find().sort({ updated_at: -1 }).limit(1)
+        
+        if (!terms || terms.length == 0) {
+            res.status(404).json({ error: 'Terms and conditions not found' });
+            return;
+        }
+        res.status(200).json(terms);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch terms and conditions' });
+    }
+};
+
 const falsyAllUserTsCsStatus = async(req, res) => {
     try{
         await User.updateMany({}, { $set: { tcs: false } });
@@ -70,5 +84,6 @@ module.exports = {
     tscsReg,
     tscsGet,
     falsyAllUserTsCsStatus,
-    truthyUserTsCsStatus
+    truthyUserTsCsStatus,
+    getLatestTcs
 }

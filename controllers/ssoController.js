@@ -10,7 +10,8 @@ exports.oAuthRedirect = passport.authenticate("google", { failureRedirect: "/ccf
 
 exports.oAuthRedirectCallback = (req, res) => {
     // Successful authentication, redirect home.
-    res.redirect("/ccfx/api/v1/oauth");
+    // res.redirect("/ccfx/api/v1/oauth"); // redirect to ccfx backend
+    res.redirect("http://localhost:5000/oauth"); // redirect to POC app
 }
 
 exports.loginSuccess = async (req, res) => {
@@ -34,7 +35,8 @@ exports.loginSuccess = async (req, res) => {
         await sendToken(user, res)
     
         res.status(200).json({
-            message: "User logged in successfully"
+            message: "User logged in successfully",
+            user
         })
     } 
 }

@@ -60,75 +60,61 @@ const sendOTP = async(user) => {
 
 //Verify OTP
 const verifyOTP = async({ email, otp }) => {
-    try{
-        if(!email || !otp){
-            throw new Error("Please enter your OTP and UserID you recieved via mail")
-        }
-
-        const otpRecord = await verificationOTPModel.find({ userEmail: email })
-
-        if(otpRecord.length <= 0){
-            // no records were found
-            throw new Error("Account is invalid or has already been verified. Please signup or login")
-        }
-        // record exists
-        const { expiresAt } = otpRecord[0]
-        const hashedOTP = otpRecord[0].otp
-
-        if(expiresAt < Date.now()) {
-            //otp record is expired
-            await otpRecord.deleteMany({ userEmail: email }).exec()
-            throw new Error("OTP code is expired, please request a new one")
-        }
-
-        const validOTP = await decryptValue(otp.trim(), hashedOTP)
-
-        if(!validOTP) {
-            //invalid otp
-            throw new Error("OTP code entered is invalid, check your inbox once more")
-        }
-        //otp provided is valid
-        await User.updateOne({ email }, { verified: true })
-        await verificationOTPModel.deleteMany({ userEmail: email })
-        return {
-            status: "VERIFIED",
-            message: "Your accounnt has been verified successfully"
-        }
-    }catch(err){
-        return {
-            status: 'FAILED',
-            message: err.message
-        }
+    if (!email || !otp) {
+        throw new Error("Please provide your email and verification code sent to you");
     }
-}
+
+    const otpRecord = await verificationOTPModel.find({ userEmail: email });
+
+    if (otpRecord.length <= 0) {
+        throw new Error("Account is invalid or has already been verified. Please signup or login");
+    }
+
+    const { expiresAt } = otpRecord[0];
+    const hashedOTP = otpRecord[0].otp;
+
+    if (expiresAt < Date.now()) {
+        await verificationOTPModel.deleteMany({ userEmail: email });
+        throw new Error("OTP code is expired, please request a new one");
+    }
+
+    const validOTP = await decryptValue(otp.trim(), hashedOTP);
+
+    if (!validOTP) {
+        throw new Error("OTP code entered is invalid, check your inbox once more");
+    }
+
+    await User.updateOne({ email }, { verified: true });
+    await verificationOTPModel.deleteMany({ userEmail: email });
+
+    return {
+        status: "VERIFIED",
+        message: "Your account has been verified successfully"
+    };
+};
+
+
 
 const resendOTP = async({ email }) => {
-    try{
-        if(!email){
-            throw new Error("Please enter the email you used to sign up")
-        }
-        await verificationOTPModel.deleteMany({ userEmail: email })
-        const user = await User.findOne({ email })
-
-        if(user){
-            if(!user.verified === true){
-                return await sendOTP(user)
-            }else{
-                return {
-                    success: false,
-                    message: `User ${user.userName}, with email: ${user.email}, is already a verified user`
-                }
-            } 
-        }else{
-            throw new Error("Email not registered in database, please signup first")
-        }     
-    }catch(err){
-        return {
-            status: 'FAILED',
-            message: err.message
-        }
+    if (!email) {
+        throw new Error("Please enter the email you used to sign up");
     }
-}
+
+    await verificationOTPModel.deleteMany({ userEmail: email });
+
+    const user = await User.findOne({ email });
+
+    if (user) {
+        if (!user.verified) {
+            return await sendOTP(user);
+        } else {
+            throw new Error(`User ${user.userName}, with email: ${user.email}, is already a verified user`);
+        }
+    } else {
+        throw new Error("Email not registered in database, please signup first");
+    }
+};
+
 
 module.exports = {
     genOTP,
