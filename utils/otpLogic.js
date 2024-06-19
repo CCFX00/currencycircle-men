@@ -2,7 +2,7 @@ const VerificationOTP = require("../models/verificationOTPModel")
 const { encryptValue, decryptValue } = require('./hashingLogic')
 const verificationOTPModel = require('../models/verificationOTPModel');
 const User = require('../models/userModel')
-const { sendMail, genMail } = require('./sendMail') 
+const { sendMail, genMail } = require('./mailLogic') 
 
 // Generate OTP
 const genOTP = async() => {

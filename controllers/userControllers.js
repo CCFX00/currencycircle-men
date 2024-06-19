@@ -8,7 +8,7 @@ const { sendToken } = require('../utils/cookies-JWT')
 const UserToken = require("../models/userTokenModel"); 
 const { checkTsCs } = require('../utils/checkTsCs')
 const { genOTP, sendOTP, verifyOTP, resendOTP } = require('../utils/otpLogic')
-const { sendMail, genMail } = require('../utils/sendMail')
+const { sendMail, genMail } = require('../utils/mailLogic')
 const crypto = require("crypto");
 const verifyUser = require('../utils/isVerified')
 
