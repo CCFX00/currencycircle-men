@@ -332,8 +332,3 @@ exports.resetPassword = catchAsyncErrors(async(req, res, next) => {
         message: "Password reset successfully"
     })
 })
-
-
-exports.getRates = catchAsyncErrors(async(res, res, next) => {
-    
-})

@@ -6,7 +6,7 @@ const querystring = require('querystring');
 const getRate = async (req) => {
 
     // Convert the request body to a query string
-    const { from, to} = req.body;
+    const { from, to } = req.body;
     const queryString = querystring.stringify({base: from, symbols: to});
 
     // Construct the URL
@@ -23,8 +23,6 @@ const getRate = async (req) => {
 
         // Send response to client
         const rates = response.data.rates;
-
-        console.log(rates)
 
         return {
             rate: parseFloat(Object.values(rates)[0]).toFixed(2)
