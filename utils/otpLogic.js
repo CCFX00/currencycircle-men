@@ -1,54 +1,66 @@
 const VerificationOTP = require("../models/verificationOTPModel")
 const { encryptValue, decryptValue } = require('./hashingLogic')
-const verificationOTPModel = require('../models/verificationOTPModel');
+const verificationOTPModel = require('../models/verificationOTPModel')
 const User = require('../models/userModel')
 const { sendMail, genMail } = require('./mailLogic') 
+const { sendSMS } = require('./smsLogic')
 
-// Generate OTP
-const genOTP = async() => {
-    const otp = `${Math.floor(1000 + Math.random() * 9000)}`    
-    return { otp }
+const genOTP = async () => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    let otp = ''
+    for (let i = 0; i < 6; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length)
+        otp += characters[randomIndex]
+    }
+    return otp
 }
 
 // Send OTP
 const sendOTP = async(user) => {
     try{
-        const { otp } = await genOTP()
+        const otp = await genOTP()
         const hashedOTP = await encryptValue(otp)
 
-        let content = {
-            body: {
-                name: `${user.userName}`,
-                intro: 'Welcome to Currency Circle FX',
-                outro: `<p>Please use code below to verify your account:</p>
-                <p><br/><strong><h1 style="text-align: center;">${otp}</h1></strong></p>
-                <p><br/>Code valid for <b>1 hour</b></p>
-                <p>Please keep it safe, do not share it with anyone</p>                
-                `
-            }
-        };
+        // let content = {
+        //     body: {
+        //         name: `${user.userName}`,
+        //         intro: 'Welcome to Currency Circle FX',
+        //         outro: `<p>Please use code below to verify your account:</p>
+        //         <p><br/><strong><h1 style="text-align: center;">${otp}</h1></strong></p>
+        //         <p><br/>Code valid for <b>1 hour</b></p>
+        //         <p>Please keep it safe, do not share it with anyone</p>                
+        //         `
+        //     }
+        // };
 
-        let mail = await genMail(content)
+        // let mail = await genMail(content)
 
-        let mssg = {
-            email: user.email,
-            subject: "CCFX Verification: OTP",
-            message: mail
+        // let mssg = {
+        //     email: user.email,
+        //     subject: "CCFX Verification: OTP",
+        //     message: mail
+        // }
+        const email = user.email
+        const otpDocument = await VerificationOTP.findOne({ email })
+
+        if(!otpDocument){
+            const newOTPVerification = await VerificationOTP({
+                userEmail: email,
+                otp: hashedOTP,
+                createdAt: Date.now(),
+                expiresAt: Date.now() + 3600000 
+            })
+    
+            await newOTPVerification.save()
         }
-
-        const newOTPVerification = await VerificationOTP({
-            userEmail: user.email,
-            otp: hashedOTP,
-            createdAt: Date.now(),
-            expiresAt: Date.now() + 3600000 
-        })
-
-        await newOTPVerification.save()
-        await sendMail(mssg)
+        
+        await sendSMS(user.phoneNumber, '', otp)
+        // await sendMail(mssg)
 
         return {
             status: 'PENDING',
-            message: `Verification OTP email sent successfully to ${user.email}`
+            // message: `Verification OTP email sent successfully to ${user.email}`
+            message: `Verification OTP email sent successfully to ${user.phoneNumber}`
         }
     }catch(err){
         return {
@@ -95,9 +107,9 @@ const verifyOTP = async({ email, otp }) => {
 
 
 
-const resendOTP = async({ email }) => {
-    if (!email) {
-        throw new Error("Please enter the email you used to sign up");
+const resendOTP = async({ email, phoneNumber }) => {
+    if (!phoneNumber) {
+        throw new Error("Please enter the phone number you used to sign up");
     }
 
     await verificationOTPModel.deleteMany({ userEmail: email });

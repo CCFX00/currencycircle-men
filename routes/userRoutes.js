@@ -18,7 +18,7 @@ const {
     getSingleUserByEmail,
     getSingleUserById
 } = require('../controllers/userControllers')
-const { isAuthenticatedUser } = require("../middleware/auth");
+const { isAuthenticatedUser, isVerifiedUser } = require("../middleware/auth");
 
 const router = new Router()
 

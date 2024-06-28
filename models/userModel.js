@@ -4,8 +4,8 @@ const validator = require('validator');
 const emailValidator = function (value) {
   return value.includes('@') && value.includes('.');
 };
-const CountryCodeEnum = {
-  values: ['+1', '+44', '+49', '+33', '+34', '+39', '+81', '+87', '+27'],
+const countryCodeEnum = {
+  values: ['+1', '+44', '+49', '+33', '+34', '+39', '+81', '+87', '+27', '+237'],
   message: 'Please select a valid country code'
 };
 const CountryEnum = {
@@ -47,7 +47,7 @@ const userSchema = new mongoose.Schema({
   profession: {
     type: String,
     required: [true, 'Please enter your profession'],
-    maxLength: [16, 'Enter a maximum of 16 characters'],
+    maxLength: [50, 'Enter a maximum of 16 characters'],
   },
   email: {
     type: String,
@@ -60,13 +60,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     validate: {
       validator: (value) => validator.isMobilePhone(value, 'any'),
-      message: 'Please enter a valid phone number'
+      message: 'Please enter a valid phone number',
+      unique: [true, 'Sorry this phone number is already registered in our system']
     },
     CountryCode: {
       type: String,
-      enum: CountryCodeEnum.values,
+      enum: countryCodeEnum.values,
       required: [true, 'Please select a Country code']
-    },
+    }
   },
   password: {
     type: String,
@@ -118,6 +119,9 @@ const userSchema = new mongoose.Schema({
       validator: (value) => /^[a-zA-Z0-9]+$/.test(value),
       message: 'Code should contain alphanumeric characters only'
     },
+  },
+  userImage: {
+    type: String
   },
   tcs: {
     type: Boolean,

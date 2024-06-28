@@ -10,7 +10,6 @@ const { checkTsCs } = require('../utils/checkTsCs')
 const { genOTP, sendOTP, verifyOTP, resendOTP } = require('../utils/otpLogic')
 const { sendMail, genMail } = require('../utils/mailLogic')
 const crypto = require("crypto");
-const verifyUser = require('../utils/isVerified')
 
 // Getting all users
 exports.getAllUsers = catchAsyncErrors(async (req, res) => {
@@ -102,18 +101,20 @@ exports.createUser = catchAsyncErrors(async (req, res, next) => {
         const foundUser = await User.findOne({  email: req.body.email })
 
         if(!foundUser){
+            req.body.phoneNumber = req.body.countryCode + req.body.phoneNumber
             req.body.password = await encryptValue(req.body.password)
-            const user = await User.create(req.body)   
+            const user = await User.create(req.body)    
             const otp = await sendOTP(user)
 
             res.status(201).json({
                 success: true,
-                // message: `User ${user.userName}, has been created successfully, an email containing your verificatin 
-                // code has been sent to ${user.email}, please check it out to verify your account.`,
-                message: `<p>User ${user.userName}, has been created successfully.</p>
-                <p>An email containing your verification code has been sent to ${user.email}.</p>
-                <p>Please check it out to verify your account.</p>`,
-                otp
+                message: `User ${user.userName}, has been created successfully, an SMS containing your verification 
+                code has been sent to ${user.phoneNumber}, please use it to verify your account.`,
+                otp,
+                user
+                // message: `<p>User ${user.userName}, has been created successfully.</p>
+                // <p>An email containing your verification code has been sent to ${user.email}.</p>
+                // <p>Please check it out to verify your account.</p>`                
             }) 
         }else{
             res.status(400).json({
@@ -169,8 +170,6 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
     if(!matchedPassword){
         return next(new ErrorHandler('Password entered is incorrect', 401))
     }
-
-    await verifyUser(user, next)
 
     const { success, message } = checkTsCs(user)
 
@@ -228,7 +227,6 @@ exports.verifyUserOTP = catchAsyncErrors(async(req, res, next) => {
     }
 });
 
-
 // resend OTP verification code
 exports.resendOTPCode = catchAsyncErrors(async (req, res, next) => {
     try {
@@ -246,7 +244,6 @@ exports.resendOTPCode = catchAsyncErrors(async (req, res, next) => {
     }
 });
 
-
 // Forgot password
 exports.forgotPassword = catchAsyncErrors(async(req, res, next) => {
     const user = await User.findOne({email: req.body.email})
@@ -255,7 +252,7 @@ exports.forgotPassword = catchAsyncErrors(async(req, res, next) => {
         return next(new ErrorHandler('User not found with this email address', 404))
     }
 
-    const { otp } = await genOTP()
+    const otp = await genOTP()
     const hashedOTP =  crypto.createHash("sha256").update(otp).digest("hex")
 
     user.resetPasswordToken = hashedOTP
@@ -270,9 +267,9 @@ exports.forgotPassword = catchAsyncErrors(async(req, res, next) => {
             body: {
                 name: `${user.userName}`,
                 intro: `Here's your Currency Circle FX reset password token`,
-                outro: `<p>Please use code below to reset your password:</p>
-                <p><br/><strong><h1 style="text-align: center;">${otp}</h1></strong></p>
-                <p><br/>Code valid for <b>15 minutes.</b></p>
+                outro: `<p>Please follow the link below to reset your CCFX password:</p>
+                <p><br/><strong><a href="http://localhost:5000/password/reset/${otp}"><h3 style="text-align: center;">CCFX Password Reset Link</h3></a></strong></p>
+                <p><br/>Token is valid for <b>15 minutes.</b></p>
                 <p>Please keep it safe, do not share it with anyone</p>
                 `
             }
@@ -307,7 +304,7 @@ exports.forgotPassword = catchAsyncErrors(async(req, res, next) => {
 
 // Reset Password
 exports.resetPassword = catchAsyncErrors(async(req, res, next) => {
-    let otp = req.body.otp
+    let otp = req.body.tkn
     hashedOTP = crypto.createHash("sha256").update(otp).digest("hex")
 
     const user = await User.findOne({
@@ -316,11 +313,11 @@ exports.resetPassword = catchAsyncErrors(async(req, res, next) => {
     })
 
     if (!user) {
-        return next(new ErrorHandler("Reset Token is invalid or expired. Please try again."))
+        return next(new ErrorHandler("Reset Token is invalid or expired. Please try again.", 400))
     }
     
     if (req.body.password !== req.body.confirmPassword){
-        return next(new ErrorHandler("Password fields do not match. Please try again."))
+        return next(new ErrorHandler("Password fields do not match. Please try again.", 400))
     }
 
     user.password = await encryptValue(req.body.password)
@@ -334,4 +331,8 @@ exports.resetPassword = catchAsyncErrors(async(req, res, next) => {
         success: true,
         message: "Password reset successfully"
     })
+})
+
+exports.uploadProfileImage = catchAsyncErrors( async(req, res, next) => {
+    
 })
