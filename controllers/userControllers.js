@@ -333,6 +333,7 @@ exports.resetPassword = catchAsyncErrors(async(req, res, next) => {
     })
 })
 
-exports.uploadProfileImage = catchAsyncErrors( async(req, res, next) => {
+
+exports.getRates = catchAsyncErrors(async(res, res, next) => {
     
 })
