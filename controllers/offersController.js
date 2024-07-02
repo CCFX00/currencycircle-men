@@ -20,10 +20,11 @@ exports.createOffer = catchAsyncErrors(async(req, res, next) => {
     const { amount, userRate, from, to } = req.body
 
     // Get the rate based on the presence of userRate
-    const rate = userRate ? userRate : (await getRate(req)).rate;
+    let rate = userRate ? userRate : (await getRate(req)).rate;
 
     // Calculate the offer value
-    const value = (rate * amount).toLocaleString().replace(/\u202f/g, ',');
+    const value = (rate * amount).toLocaleString().replace(/\u202f/g, ',')
+    // rate = rate.toLocaleString().replace(/\u202f/g, ',')
 
     // Create the offer
     const offer = await Offer.create({
@@ -53,11 +54,9 @@ exports.getOfferDetails = catchAsyncErrors(async(req, res, next) => {
     )
 
     if(offer.length === 0) {
-        const usr = await User.findById((req.user._id).toString())
-        return res.status(404).json({
-            success: true,
-            message: 'You have no offers, Matched trades or discussions',
-            usr
+        return res.json({
+            success: false,
+            message: 'You have no offers',
         })
     }    
 

@@ -123,6 +123,9 @@ const userSchema = new mongoose.Schema({
   userImage: {
     type: String
   },
+  joinedAt: {
+    type: String
+  },
   tcs: {
     type: Boolean,
     required: [true, 'Terms and Conditions field cannot be left empty. Value must either be either true or false'],

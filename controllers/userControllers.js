@@ -10,6 +10,7 @@ const { checkTsCs } = require('../utils/checkTsCs')
 const { genOTP, sendOTP, verifyOTP, resendOTP } = require('../utils/otpLogic')
 const { sendMail, genMail } = require('../utils/mailLogic')
 const crypto = require("crypto");
+const { formatDate } = require('../utils/formatDate')
 
 // Getting all users
 exports.getAllUsers = catchAsyncErrors(async (req, res) => {
@@ -159,7 +160,9 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
         return next(new ErrorHandler('Please enter your email and password', 400))
     }
     
-    const user = await User.findOne({email}).select("+password")
+    let user = await User.findOne({email}).select("+password")
+
+    user.joinedAt = formatDate(user)
 
     if(!user){
         return next(new ErrorHandler('User not found with this email', 401))
@@ -180,8 +183,9 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
         })
     }else{
         await sendToken(user, res)
-    
+
         res.status(200).json({
+            user,
             message: `User ${user.userName} logged in successfully`
         })
     }    
@@ -230,7 +234,8 @@ exports.verifyUserOTP = catchAsyncErrors(async(req, res, next) => {
 // resend OTP verification code
 exports.resendOTPCode = catchAsyncErrors(async (req, res, next) => {
     try {
-        const verificationStatus = await resendOTP(req.body);
+        const { email, phoneNumber } = await User.findOne({ email: `${req.body.email}` });
+        const verificationStatus = resendOTP({ email, phoneNumber })
         res.status(200).json({
             success: true,
             verificationStatus
