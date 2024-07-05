@@ -11,7 +11,7 @@ const {
 const router = new Router()
 
 //Offer Routes
-router.route('/latest').get(getRate)
+router.route('/latest').post(getRate)
 router.route('/offer/new').post(isAuthenticatedUser, createOffer)
 router.route('/offer/details').get(isAuthenticatedUser, getOfferDetails)
 

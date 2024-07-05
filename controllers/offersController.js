@@ -3,6 +3,7 @@ const User = require('../models/userModel')
 const ErrorHandler = require('../utils/ErrorHandler')
 const catchAsyncErrors = require('../middleware/catchAsyncErrors')
 const { getRate } = require('../utils/getRate')
+const { formatDate } = require('../utils/formatDate')
 
 
 // Get the rate
@@ -17,14 +18,14 @@ exports.getRate = catchAsyncErrors(async(req, res, next) => {
 
 // Create offer
 exports.createOffer = catchAsyncErrors(async(req, res, next) => {
-    const { amount, userRate, from, to } = req.body
+    let { amount, userRate, from, to } = req.body
 
     // Get the rate based on the presence of userRate
     let rate = userRate ? userRate : (await getRate(req)).rate;
 
     // Calculate the offer value
     const value = (rate * amount).toLocaleString().replace(/\u202f/g, ',')
-    // rate = rate.toLocaleString().replace(/\u202f/g, ',')
+    amount = amount.toLocaleString().replace(/\u202f/g, ',')
 
     // Create the offer
     const offer = await Offer.create({
@@ -50,7 +51,7 @@ exports.getOfferDetails = catchAsyncErrors(async(req, res, next) => {
 
     const offer = await Offer.find({ user: (req.user._id).toString() }).populate(
         'user',
-        'name email country userName'
+        // 'name email city country userName joinedAt'
     )
 
     if(offer.length === 0) {
@@ -62,6 +63,8 @@ exports.getOfferDetails = catchAsyncErrors(async(req, res, next) => {
 
     // Extract user information from the first offer
     const user = offer[0].user || {};
+
+    user.joinedAt = formatDate(user)
 
     // Remove user field from each offer object
     const offers = offer.map(offer => ({

@@ -185,7 +185,6 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
         await sendToken(user, res)
 
         res.status(200).json({
-            user,
             message: `User ${user.userName} logged in successfully`
         })
     }    
@@ -195,9 +194,10 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
 exports.logoutUser = catchAsyncErrors(async(req, res, next) => { 
     const tkn = req.cookies.refresh_token
     await UserToken.deleteOne({token: tkn})
-    res.clearCookie("access_token", { expires: new Date(Date.now()), httpOnly: true })
-    res.clearCookie("refresh_token", { expires: new Date(Date.now()), httpOnly: true })
-    res.clearCookie("connect.sid", { httpOnly: true });
+
+    for(let cookie in req.cookies){
+        res.clearCookie(cookie, { expires: new Date(Date.now()), httpOnly: true })
+    }
 
     req.session.destroy((err) => {
         if(err){
@@ -217,24 +217,24 @@ exports.logoutUser = catchAsyncErrors(async(req, res, next) => {
 // verify user account with OTP
 exports.verifyUserOTP = catchAsyncErrors(async(req, res, next) => {
     try {
-        const verificationStatus = await verifyOTP(req.body);
+        const verificationStatus = await verifyOTP(req.body)
         res.status(200).json({
             success: true,
             verificationStatus
-        });
+        })
     } catch (err) {
         res.status(400).json({
             success: false,
             status: 'FAILED',
             message: err.message
-        });
+        })
     }
-});
+})
 
 // resend OTP verification code
 exports.resendOTPCode = catchAsyncErrors(async (req, res, next) => {
     try {
-        const { email, phoneNumber } = await User.findOne({ email: `${req.body.email}` });
+        const { email, phoneNumber } = await User.findOne({ email: `${req.body.email}` })
         const verificationStatus = resendOTP({ email, phoneNumber })
         res.status(200).json({
             success: true,
@@ -245,9 +245,9 @@ exports.resendOTPCode = catchAsyncErrors(async (req, res, next) => {
             success: false,
             status: 'FAILED',
             message: err.message
-        });
+        })
     }
-});
+})
 
 // Forgot password
 exports.forgotPassword = catchAsyncErrors(async(req, res, next) => {
@@ -278,7 +278,7 @@ exports.forgotPassword = catchAsyncErrors(async(req, res, next) => {
                 <p>Please keep it safe, do not share it with anyone</p>
                 `
             }
-        };
+        }
 
         let mail = await genMail(content)
 

@@ -4,7 +4,6 @@ const querystring = require('querystring');
 
 
 const getRate = async (req) => {
-
     // Convert the request body to a query string
     const { from, to } = req.body;
     const queryString = querystring.stringify({base: from, symbols: to});
@@ -25,7 +24,7 @@ const getRate = async (req) => {
         const rates = response.data.rates;
 
         return {
-            rate: parseFloat(Object.values(rates)[0]).toFixed(4)
+            rate: parseFloat(Object.values(rates)[0]).toFixed(2)
         }   
     } catch (error) {
         // Handle errors
