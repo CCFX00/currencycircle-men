@@ -1,4 +1,5 @@
 const User = require('../models/userModel')
+const { getCurrency } = require('../utils/getCurrency')
 const ErrorHandler = require('../utils/ErrorHandler')
 const catchAsyncErrors = require('../middleware/catchAsyncErrors')
 const Features = require('../utils/Features')
@@ -104,6 +105,15 @@ exports.createUser = catchAsyncErrors(async (req, res, next) => {
         if(!foundUser){
             req.body.phoneNumber = req.body.countryCode + req.body.phoneNumber
             req.body.password = await encryptValue(req.body.password)
+
+            // Assuming you have a way to distinguish between US and Canada, e.g., an additional field in req.body
+            let countryCodeKey = req.body.countryCode
+            if (req.body.countryCode === '+1') {
+                countryCodeKey += '-' + req.body.country.slice(0, 2).toUpperCase() 
+            }
+
+            req.body.currency = getCurrency(countryCodeKey)
+
             const user = await User.create(req.body)    
             const otp = await sendOTP(user)
 
@@ -185,6 +195,7 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
         await sendToken(user, res)
 
         res.status(200).json({
+            user,
             message: `User ${user.userName} logged in successfully`
         })
     }    

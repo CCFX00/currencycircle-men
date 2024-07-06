@@ -1,15 +1,34 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 
-const emailValidator = function (value) {
-  return value.includes('@') && value.includes('.');
-};
 const countryCodeEnum = {
-  values: ['+1', '+44', '+49', '+33', '+34', '+39', '+81', '+87', '+27', '+237'],
+  values: ['+237', '+44', '+1', '+971', '+33', '+86', '+20', '+234', '+1', '+49', '+91', '+81', '+61', '+7', '+82', '+39', '+34', '+55', '+27', '+52'],
   message: 'Please select a valid country code'
 };
+
 const CountryEnum = {
-  values: ['USA', 'Canada', 'UK', 'Australia', 'Germany', 'France', 'Spain', 'Italy', 'Japan'],
+  values: [
+    'Cameroon',          // <!-- +237 -->
+    'United Kingdom',    // <!-- +44 -->
+    'United States',     // <!-- +1 -->
+    'United Arab Emirates', // <!-- +971 -->
+    'France',            // <!-- +33 -->
+    'China',             // <!-- +86 -->
+    'Egypt',             // <!-- +20 -->
+    'Nigeria',           // <!-- +234 -->
+    'Canada',            // <!-- +1 -->
+    'Germany',           // <!-- +49 -->
+    'India',             // <!-- +91 -->
+    'Japan',             // <!-- +81 -->
+    'Australia',         // <!-- +61 -->
+    'Russia',            // <!-- +7 -->
+    'South Korea',       // <!-- +82 -->
+    'Italy',             // <!-- +39 -->
+    'Spain',             // <!-- +34 -->
+    'Brazil',            // <!-- +55 -->
+    'South Africa',      // <!-- +27 -->
+    'Mexico'             // <!-- +52 -->
+  ],
   message: 'Please select a valid country'
 };
 
@@ -69,6 +88,9 @@ const userSchema = new mongoose.Schema({
       required: [true, 'Please select a Country code']
     }
   },
+  currency:{
+    type: String,
+  },
   password: {
     type: String,
     required: [true, 'Please enter your password'],
@@ -87,7 +109,7 @@ const userSchema = new mongoose.Schema({
   addressLine1: {
     type: String,
     required: [true, 'Please enter address line 1'],
-    maxLength: [20, 'alphanumeric maximum 20 characters'],
+    maxLength: [60, 'alphanumeric maximum 60 characters'],
     validate: {
       validator: (value) => /^[a-zA-Z0-9\s]+$/.test(value),
       message: 'Address line 1 should contain alphanumeric characters and spaces only'
@@ -96,7 +118,7 @@ const userSchema = new mongoose.Schema({
   addressLine2: {
     type: String,
     required: [true, 'Please enter address line 2'],
-    maxLength: [20, 'alphanumeric maximum 20 characters'],
+    maxLength: [60, 'alphanumeric maximum 60 characters'],
     validate: {
       validator: (value) => /^[a-zA-Z0-9\s]+$/.test(value),
       message: 'Address line 2 should contain alphanumeric characters only'
@@ -139,4 +161,4 @@ const userSchema = new mongoose.Schema({
   resetPasswordTime: Date
 }, { timestamps: true });
 
-module.exports = mongoose.model('User', userSchema); 
+module.exports = mongoose.model('User', userSchema)
