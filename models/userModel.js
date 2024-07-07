@@ -6,7 +6,7 @@ const countryCodeEnum = {
   message: 'Please select a valid country code'
 };
 
-const CountryEnum = {
+const countryEnum = {
   values: [
     'Cameroon',          // <!-- +237 -->
     'United Kingdom',    // <!-- +44 -->
@@ -82,7 +82,7 @@ const userSchema = new mongoose.Schema({
       message: 'Please enter a valid phone number',
       unique: [true, 'Sorry this phone number is already registered in our system']
     },
-    CountryCode: {
+    countryCode: {
       type: String,
       enum: countryCodeEnum.values,
       required: [true, 'Please select a Country code']
@@ -104,7 +104,7 @@ const userSchema = new mongoose.Schema({
   country: {
     type: String,
     required: [true, 'Please select a country code'],
-    enum: CountryEnum
+    enum: countryEnum
   },
   addressLine1: {
     type: String,

@@ -12,6 +12,7 @@ const { genOTP, sendOTP, verifyOTP, resendOTP } = require('../utils/otpLogic')
 const { sendMail, genMail } = require('../utils/mailLogic')
 const crypto = require("crypto");
 const { formatDate } = require('../utils/formatDate')
+const Offer = require('../models/offersModel')
 
 // Getting all users
 exports.getAllUsers = catchAsyncErrors(async (req, res) => {
@@ -51,15 +52,24 @@ exports.updateUser = catchAsyncErrors(async (req, res, next) => {
 
 // Deleting a user
 exports.deleteUser = catchAsyncErrors(async (req, res, next) => {
-    let user = await User.findById(req.params.id)
-    if(!user){
-        return next(new ErrorHandler('User is not found with this id', 404))
+    try{
+        let foundUser = await User.findById(req.params.id)
+        if(!foundUser){
+            return next(new ErrorHandler('User is not found with this id', 404))
+        }
+
+        await Offer.deleteMany({ user: req.params.id })
+        await foundUser.deleteOne()
+        res.status(200).json({
+            success: true,
+            message: 'User deleted successfully'
+        })
+    }catch(err){
+        res.status(500).json({
+            success: false,
+            message: err.message
+        })
     }
-    await user.deleteOne()
-    res.status(200).json({
-        success: true,
-        message: 'User deleted successfully'
-    })
 })
 
 // Single user details
@@ -113,6 +123,7 @@ exports.createUser = catchAsyncErrors(async (req, res, next) => {
             }
 
             req.body.currency = getCurrency(countryCodeKey)
+            req.body.joinedAt = formatDate({createdAt: new Date(Date.now())})
 
             const user = await User.create(req.body)    
             const otp = await sendOTP(user)

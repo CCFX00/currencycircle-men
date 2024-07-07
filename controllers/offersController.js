@@ -7,7 +7,7 @@ const { formatDate } = require('../utils/formatDate')
 
 
 // Get the rate
-exports.getRate = catchAsyncErrors(async(req, res, next) => {
+const displayRate = catchAsyncErrors(async(req, res, next) => {
     const rate = (await getRate(req)).rate
 
     res.status(200).json({
@@ -17,11 +17,11 @@ exports.getRate = catchAsyncErrors(async(req, res, next) => {
 })
 
 // Create offer
-exports.createOffer = catchAsyncErrors(async(req, res, next) => {
+const createOffer = catchAsyncErrors(async(req, res, next) => {
     let { amount, userRate, from, to } = req.body
 
     // Get the rate based on the presence of userRate
-    let rate = userRate ? userRate : (await getRate(req)).rate;
+    let rate = userRate ? userRate : (await getRate(req)).rate
 
     // Calculate the offer value
     const value = (rate * amount).toLocaleString().replace(/\u202f/g, ',')
@@ -36,35 +36,32 @@ exports.createOffer = catchAsyncErrors(async(req, res, next) => {
         value: value,
         user: req.user._id,
         createdAt: Date.now()
-    });
+    })
 
     // Send the response
     res.status(200).json({
         success: true,
         message: "Your Offer has been created successfully",
         offer
-    });
-});
+    })
+})
 
 // Getting offer details
-exports.getOfferDetails = catchAsyncErrors(async(req, res, next) => {
-
+const getOfferDetails = async (req) => {
     const offer = await Offer.find({ user: (req.user._id).toString() }).populate(
         'user',
-        'name email city country userName joinedAt'
+        'name email city country userName'
     )
 
-    if(offer.length === 0) {
-        return res.json({
+    if (offer.length === 0) {
+        return {
             success: false,
             message: 'You have no offers',
-        })
-    }    
+        }
+    }
 
     // Extract user information from the first offer
     const user = offer[0].user || {};
-
-    user.joinedAt = formatDate(user)
 
     // Remove user field from each offer object
     const offers = offer.map(offer => ({
@@ -74,12 +71,39 @@ exports.getOfferDetails = catchAsyncErrors(async(req, res, next) => {
         to: offer.to,
         amount: offer.amount,
         value: offer.value,
-        createdAt: offer.createdAt
-    }));
+        user: user._id,
+        createdAt: formatDate({ createdAt: offer.createdAt })
+    }))
+
+    // console.log({user, offers})
+
+    return {
+        user,
+        offers
+    }
+}
+
+// displayOfferDetails function
+const displayOfferDetails = catchAsyncErrors(async (req, res, next) => {
+    const offerDetails = await getOfferDetails(req)
+
+    if (offerDetails.success === false) {
+        return res.status(200).json({
+            success: false,
+            message: 'You have no offers',
+        })
+    }
 
     res.status(200).json({
         success: true,
-        user: user,
-        offers: offers
+        user: offerDetails.user,
+        offers: offerDetails.offers
     })
 })
+
+module.exports = {
+    displayRate,
+    createOffer,
+    getOfferDetails,
+    displayOfferDetails
+}
