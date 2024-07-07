@@ -8,6 +8,15 @@ exports.isLoggedIn = (req, res, next) => {
     req.user ? next() : res.sendStatus(401); // unauthorized access 
 }
 
+exports.isVerifiedUser = async (req, res, next) => {
+    const email = req.body.email
+    const user = await User.findOne({email})
+
+    if (!user.verified) {
+        return next(new ErrorHandler('Please verify your account to access this resource', 400));
+    }
+};
+
 exports.isAuthenticatedUser = catchAsyncErrors(async(req, res, next) => {      
     const { access_token, refresh_token } = req.cookies
         

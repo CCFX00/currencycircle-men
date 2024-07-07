@@ -1,4 +1,5 @@
 const User = require('../models/userModel')
+const { getCurrency } = require('../utils/getCurrency')
 const ErrorHandler = require('../utils/ErrorHandler')
 const catchAsyncErrors = require('../middleware/catchAsyncErrors')
 const Features = require('../utils/Features')
@@ -10,7 +11,8 @@ const { checkTsCs } = require('../utils/checkTsCs')
 const { genOTP, sendOTP, verifyOTP, resendOTP } = require('../utils/otpLogic')
 const { sendMail, genMail } = require('../utils/mailLogic')
 const crypto = require("crypto");
-const verifyUser = require('../utils/isVerified')
+const { formatDate } = require('../utils/formatDate')
+const Offer = require('../models/offersModel')
 
 // Getting all users
 exports.getAllUsers = catchAsyncErrors(async (req, res) => {
@@ -50,15 +52,24 @@ exports.updateUser = catchAsyncErrors(async (req, res, next) => {
 
 // Deleting a user
 exports.deleteUser = catchAsyncErrors(async (req, res, next) => {
-    let user = await User.findById(req.params.id)
-    if(!user){
-        return next(new ErrorHandler('User is not found with this id', 404))
+    try{
+        let foundUser = await User.findById(req.params.id)
+        if(!foundUser){
+            return next(new ErrorHandler('User is not found with this id', 404))
+        }
+
+        await Offer.deleteMany({ user: req.params.id })
+        await foundUser.deleteOne()
+        res.status(200).json({
+            success: true,
+            message: 'User deleted successfully'
+        })
+    }catch(err){
+        res.status(500).json({
+            success: false,
+            message: err.message
+        })
     }
-    await user.deleteOne()
-    res.status(200).json({
-        success: true,
-        message: 'User deleted successfully'
-    })
 })
 
 // Single user details
@@ -102,18 +113,30 @@ exports.createUser = catchAsyncErrors(async (req, res, next) => {
         const foundUser = await User.findOne({  email: req.body.email })
 
         if(!foundUser){
+            req.body.phoneNumber = req.body.countryCode + req.body.phoneNumber
             req.body.password = await encryptValue(req.body.password)
-            const user = await User.create(req.body)   
+
+            // Assuming you have a way to distinguish between US and Canada, e.g., an additional field in req.body
+            let countryCodeKey = req.body.countryCode
+            if (req.body.countryCode === '+1') {
+                countryCodeKey += '-' + req.body.country.slice(0, 2).toUpperCase() 
+            }
+
+            req.body.currency = getCurrency(countryCodeKey)
+            req.body.joinedAt = formatDate({createdAt: new Date(Date.now())})
+
+            const user = await User.create(req.body)    
             const otp = await sendOTP(user)
 
             res.status(201).json({
                 success: true,
-                // message: `User ${user.userName}, has been created successfully, an email containing your verificatin 
-                // code has been sent to ${user.email}, please check it out to verify your account.`,
-                message: `<p>User ${user.userName}, has been created successfully.</p>
-                <p>An email containing your verification code has been sent to ${user.email}.</p>
-                <p>Please check it out to verify your account.</p>`,
-                otp
+                message: `User ${user.userName}, has been created successfully, an SMS containing your verification 
+                code has been sent to ${user.phoneNumber}, please use it to verify your account.`,
+                otp,
+                user
+                // message: `<p>User ${user.userName}, has been created successfully.</p>
+                // <p>An email containing your verification code has been sent to ${user.email}.</p>
+                // <p>Please check it out to verify your account.</p>`                
             }) 
         }else{
             res.status(400).json({
@@ -158,7 +181,9 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
         return next(new ErrorHandler('Please enter your email and password', 400))
     }
     
-    const user = await User.findOne({email}).select("+password")
+    let user = await User.findOne({email}).select("+password")
+
+    user.joinedAt = formatDate(user)
 
     if(!user){
         return next(new ErrorHandler('User not found with this email', 401))
@@ -170,8 +195,6 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
         return next(new ErrorHandler('Password entered is incorrect', 401))
     }
 
-    await verifyUser(user, next)
-
     const { success, message } = checkTsCs(user)
 
     if(success === false){
@@ -181,8 +204,9 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
         })
     }else{
         await sendToken(user, res)
-    
+
         res.status(200).json({
+            user,
             message: `User ${user.userName} logged in successfully`
         })
     }    
@@ -192,9 +216,10 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
 exports.logoutUser = catchAsyncErrors(async(req, res, next) => { 
     const tkn = req.cookies.refresh_token
     await UserToken.deleteOne({token: tkn})
-    res.clearCookie("access_token", { expires: new Date(Date.now()), httpOnly: true })
-    res.clearCookie("refresh_token", { expires: new Date(Date.now()), httpOnly: true })
-    res.clearCookie("connect.sid", { httpOnly: true });
+
+    for(let cookie in req.cookies){
+        res.clearCookie(cookie, { expires: new Date(Date.now()), httpOnly: true })
+    }
 
     req.session.destroy((err) => {
         if(err){
@@ -214,25 +239,25 @@ exports.logoutUser = catchAsyncErrors(async(req, res, next) => {
 // verify user account with OTP
 exports.verifyUserOTP = catchAsyncErrors(async(req, res, next) => {
     try {
-        const verificationStatus = await verifyOTP(req.body);
+        const verificationStatus = await verifyOTP(req.body)
         res.status(200).json({
             success: true,
             verificationStatus
-        });
+        })
     } catch (err) {
         res.status(400).json({
             success: false,
             status: 'FAILED',
             message: err.message
-        });
+        })
     }
-});
-
+})
 
 // resend OTP verification code
 exports.resendOTPCode = catchAsyncErrors(async (req, res, next) => {
     try {
-        const verificationStatus = await resendOTP(req.body);
+        const { email, phoneNumber } = await User.findOne({ email: `${req.body.email}` })
+        const verificationStatus = resendOTP({ email, phoneNumber })
         res.status(200).json({
             success: true,
             verificationStatus
@@ -242,10 +267,9 @@ exports.resendOTPCode = catchAsyncErrors(async (req, res, next) => {
             success: false,
             status: 'FAILED',
             message: err.message
-        });
+        })
     }
-});
-
+})
 
 // Forgot password
 exports.forgotPassword = catchAsyncErrors(async(req, res, next) => {
@@ -255,7 +279,7 @@ exports.forgotPassword = catchAsyncErrors(async(req, res, next) => {
         return next(new ErrorHandler('User not found with this email address', 404))
     }
 
-    const { otp } = await genOTP()
+    const otp = await genOTP()
     const hashedOTP =  crypto.createHash("sha256").update(otp).digest("hex")
 
     user.resetPasswordToken = hashedOTP
@@ -270,13 +294,13 @@ exports.forgotPassword = catchAsyncErrors(async(req, res, next) => {
             body: {
                 name: `${user.userName}`,
                 intro: `Here's your Currency Circle FX reset password token`,
-                outro: `<p>Please use code below to reset your password:</p>
-                <p><br/><strong><h1 style="text-align: center;">${otp}</h1></strong></p>
-                <p><br/>Code valid for <b>15 minutes.</b></p>
+                outro: `<p>Please follow the link below to reset your CCFX password:</p>
+                <p><br/><strong><a href="http://localhost:5000/password/reset/${otp}"><h3 style="text-align: center;">CCFX Password Reset Link</h3></a></strong></p>
+                <p><br/>Token is valid for <b>15 minutes.</b></p>
                 <p>Please keep it safe, do not share it with anyone</p>
                 `
             }
-        };
+        }
 
         let mail = await genMail(content)
 
@@ -307,7 +331,7 @@ exports.forgotPassword = catchAsyncErrors(async(req, res, next) => {
 
 // Reset Password
 exports.resetPassword = catchAsyncErrors(async(req, res, next) => {
-    let otp = req.body.otp
+    let otp = req.body.tkn
     hashedOTP = crypto.createHash("sha256").update(otp).digest("hex")
 
     const user = await User.findOne({
@@ -316,11 +340,11 @@ exports.resetPassword = catchAsyncErrors(async(req, res, next) => {
     })
 
     if (!user) {
-        return next(new ErrorHandler("Reset Token is invalid or expired. Please try again."))
+        return next(new ErrorHandler("Reset Token is invalid or expired. Please try again.", 400))
     }
     
     if (req.body.password !== req.body.confirmPassword){
-        return next(new ErrorHandler("Password fields do not match. Please try again."))
+        return next(new ErrorHandler("Password fields do not match. Please try again.", 400))
     }
 
     user.password = await encryptValue(req.body.password)
