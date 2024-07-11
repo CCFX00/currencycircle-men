@@ -26,6 +26,9 @@ const offerSchema = new mongoose.Schema({
         ref: "User",
         required: true
     },
+    matchCount: {
+        type: String
+    },
     createdAt: {
         type: Date,
         default: Date.now()

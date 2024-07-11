@@ -38,7 +38,6 @@ const createOffer = catchAsyncErrors(async(req, res, next) => {
         createdAt: Date.now()
     })
 
-    // Send the response
     res.status(200).json({
         success: true,
         message: "Your Offer has been created successfully",
@@ -74,8 +73,6 @@ const getOfferDetails = async (req) => {
         user: user._id,
         createdAt: formatDate({ createdAt: offer.createdAt })
     }))
-
-    // console.log({user, offers})
 
     return {
         user,
