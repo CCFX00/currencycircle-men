@@ -49,7 +49,7 @@ const createOffer = catchAsyncErrors(async(req, res, next) => {
 const getOfferDetails = async (req) => {
     const offer = await Offer.find({ user: (req.user._id).toString() }).populate(
         'user',
-        'name email city country userName'
+        'name city country userName'
     )
 
     if (offer.length === 0) {
