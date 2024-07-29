@@ -1,6 +1,7 @@
 const Offer = require('../models/offersModel')
 const { getOfferDetails } = require('./offersController')
 const catchAsyncErrors = require('../middleware/catchAsyncErrors')
+const { formatDate } = require('../utils/formatDate')
 
 const matchOffers = async (userOffer, allOffers) => {
     const { from: userFrom, to: userTo, user: userId, value } = userOffer
@@ -36,6 +37,13 @@ const getMatchedTrades = async (req, res) => {
     try {
         const userOffers = (await getOfferDetails(req)).offers
         const allOffers = await Offer.find()
+
+        if (!userOffers) {
+            return res.json({
+                success: false,
+                message: 'You have no offers',
+            })
+        }
 
         const matchedOffersArray = await Promise.all(userOffers.map(async userOffer => {
             const matchingOffers = await matchOffers(userOffer, allOffers)
@@ -84,8 +92,9 @@ const displayMatchedTrades = async (req, res) => {
         const matchedTradesArray = await Promise.all(matchingOffers.map(async matchedOffer => {
             await matchedOffer.populate(
                 'user',
-                'name city country userName'
-            )
+                'name city country userName userImage'
+            )            
+            matchedOffer.creationDate = formatDate(matchedOffer)
             matches.push(matchedOffer)
         }))
 
@@ -102,7 +111,7 @@ const displayMatchedTrades = async (req, res) => {
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: `Error getting match trades count: ${error.message}`
+            message: `Error getting match trades: ${error.message}`
         })
     }
 }

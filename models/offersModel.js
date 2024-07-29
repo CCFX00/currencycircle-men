@@ -29,6 +29,9 @@ const offerSchema = new mongoose.Schema({
     matchCount: {
         type: String
     },
+    creationDate: {
+        type: String
+    },
     createdAt: {
         type: Date,
         default: Date.now()

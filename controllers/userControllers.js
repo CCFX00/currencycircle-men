@@ -183,11 +183,11 @@ exports.loginUser = catchAsyncErrors( async(req, res, next) =>{
     
     let user = await User.findOne({email}).select("+password")
 
-    user.joinedAt = formatDate(user)
-
     if(!user){
         return next(new ErrorHandler('User not found with this email', 401))
     }
+
+    user.joinedAt = formatDate(user)
 
     const matchedPassword = await decryptValue(password, user.password)
 
