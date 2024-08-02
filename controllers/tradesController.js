@@ -10,10 +10,10 @@ const matchOffers = async (userOffer, allOffers) => {
     // Filter matching offers from all offers
     const matchingOffers = allOffers.filter(offer => {
         if (offer.user.toString() !== userId.toString()) {
-            const offerValue = parseFloat(offer.value.replace(/,/g, ''))
-            const percentageOff = userOfferValue * 0.1
-            const upperBound = userOfferValue + percentageOff
-            const lowerBound = userOfferValue - percentageOff
+            const offerAmount = parseFloat(offer.amount.replace(/,/g, ''))
+            const percentageOff = offerAmount * 0.1
+            const upperBound = offerAmount + percentageOff
+            const lowerBound = offerAmount - percentageOff
             
             // console.log('\n User Offer Value:', userOfferValue)
             // console.log('Offer Value:', offerValue)
@@ -21,7 +21,7 @@ const matchOffers = async (userOffer, allOffers) => {
             // console.log(offer, '\n')
 
             // Ensure the offer value is within ±10% range of the user offer value
-            if (offerValue >= lowerBound && offerValue <= upperBound) {
+            if (offerAmount >= lowerBound && offerAmount <= upperBound) {
                 return (
                     offer.from === userTo &&
                     offer.to === userFrom

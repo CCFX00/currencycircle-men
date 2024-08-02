@@ -8,11 +8,12 @@ const { formatDate } = require('../utils/formatDate')
 
 // Get the rate
 const displayRate = catchAsyncErrors(async(req, res, next) => {
-    const rate = (await getRate(req)).rate
+    const { rate, rndRate } = await getRate(req)
 
     res.status(200).json({
         success: true,
-        rate
+        rate,
+        rndRate
     })
 })
 
@@ -29,7 +30,7 @@ const createOffer = catchAsyncErrors(async(req, res, next) => {
 
     // Create the offer
     const offer = await Offer.create({
-        rate: rate,
+        rate: rate.toFixed(2),
         from: from,
         to: to,
         amount: amount,

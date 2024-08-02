@@ -24,7 +24,8 @@ const getRate = async (req) => {
         const rates = response.data.rates;
 
         return {
-            rate: parseFloat(Object.values(rates)[0]).toFixed(2)
+            rate: parseFloat(Object.values(rates)[0]),
+            rndRate: parseFloat(Object.values(rates)[0]).toFixed(2)            
         }   
     } catch (error) {
         // Handle errors
