@@ -19,31 +19,34 @@ const displayRate = catchAsyncErrors(async(req, res, next) => {
 
 // Create offer
 const createOffer = catchAsyncErrors(async(req, res, next) => {
-    let { amount, userRate, from, to } = req.body
+    try{
+        let { amount, value, from, to, rate } = req.body
 
-    // Get the rate based on the presence of userRate
-    let rate = userRate ? userRate : (await getRate(req)).rate
+        // Convert offer amount to local string format
+        amount = amount.toLocaleString().replace(/\u202f/g, ',')
 
-    // Calculate the offer value
-    const value = (rate * amount).toLocaleString().replace(/\u202f/g, ',')
-    amount = amount.toLocaleString().replace(/\u202f/g, ',')
+        // Creating the offer
+        const offer = await Offer.create({
+            rate: parseFloat(rate).toFixed(2),
+            from: from,
+            to: to,
+            amount: amount,
+            value: value,
+            user: req.user._id,
+            createdAt: Date.now()
+        })
 
-    // Create the offer
-    const offer = await Offer.create({
-        rate: rate.toFixed(2),
-        from: from,
-        to: to,
-        amount: amount,
-        value: value,
-        user: req.user._id,
-        createdAt: Date.now()
+        res.status(200).json({
+            success: true,
+            message: "Your Offer has been created successfully",
+            offer
     })
-
-    res.status(200).json({
-        success: true,
-        message: "Your Offer has been created successfully",
-        offer
-    })
+    }catch(err){
+        res.status(500).json({
+            success: false,
+            message: err.message
+        })
+    }
 })
 
 // Getting offer details
