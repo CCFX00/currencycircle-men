@@ -4,24 +4,26 @@ const catchAsyncErrors = require('../middleware/catchAsyncErrors')
 const { formatDate } = require('../utils/formatDate')
 
 const matchOffers = async (userOffer, allOffers) => {
+    // console.log(userOffer)
     const { from: userFrom, to: userTo, user: userId, value } = userOffer
     const userOfferValue = parseFloat(value.replace(/,/g, ''))
+    // console.log(userOfferValue)
 
     // Filter matching offers from all offers
     const matchingOffers = allOffers.filter(offer => {
         if (offer.user.toString() !== userId.toString()) {
-            const offerAmount = parseFloat(offer.amount.replace(/,/g, ''))
-            const percentageOff = offerAmount * 0.1
-            const upperBound = offerAmount + percentageOff
-            const lowerBound = offerAmount - percentageOff
+            const offerValue = parseFloat(offer.amount.replace(/,/g, ''))
+            const percentageOff = userOfferValue * 0.1
+            const upperBound = userOfferValue + percentageOff
+            const lowerBound = userOfferValue - percentageOff
             
-            // console.log('\n User Offer Value:', userOfferValue)
-            // console.log('Offer Value:', offerValue)
+            // console.log('\n User Offer Amount:', userOfferAmount)
+            // console.log('Offer Value:', offer.amount)
             // console.log('Percentage Range: ( lower bound:', lowerBound, '- upper bound:', upperBound, ')')
             // console.log(offer, '\n')
 
             // Ensure the offer value is within ±10% range of the user offer value
-            if (offerAmount >= lowerBound && offerAmount <= upperBound) {
+            if (offerValue >= lowerBound && offerValue <= upperBound) {
                 return (
                     offer.from === userTo &&
                     offer.to === userFrom
