@@ -1,13 +1,10 @@
 const Offer = require('../models/offersModel')
 const { getOfferDetails } = require('./offersController')
-const catchAsyncErrors = require('../middleware/catchAsyncErrors')
 const { formatDate } = require('../utils/formatDate')
 
 const matchOffers = async (userOffer, allOffers) => {
-    // console.log(userOffer)
     const { from: userFrom, to: userTo, user: userId, value } = userOffer
     const userOfferValue = parseFloat(value.replace(/,/g, ''))
-    // console.log(userOfferValue)
 
     // Filter matching offers from all offers
     const matchingOffers = allOffers.filter(offer => {
@@ -118,7 +115,49 @@ const displayMatchedTrades = async (req, res) => {
     }
 }
 
+const displayAllMatchedTrades = async (req, res) => {
+    try{
+        const matchedOffers = await getMatchedTrades(req, null)
+        
+        let allMatchedOffers = []
+
+        for (const userOffer of matchedOffers) {
+            if(userOffer.matchingOffers.length > 0){
+        
+                await Promise.all(userOffer.matchingOffers.map(async matchedOffer => {
+                        await matchedOffer.populate(
+                            'user',
+                            'name city country userName userImage'
+                        )            
+                        matchedOffer.creationDate = formatDate(matchedOffer)
+                    })
+                )
+                allMatchedOffers = allMatchedOffers.concat(userOffer.matchingOffers);
+            }            
+        } 
+
+        if(allMatchedOffers.length > 0){
+            res.status(200).json({
+                success: true,
+                allMatchedOffers
+            })
+        }else{  
+            res.status(200).json({
+                success: false,
+                message: 'User has no matched offers'
+            })                
+        }     
+    }catch(err){
+        return res.status(500).json({
+            success: false,
+            message: `Error getting match trades: ${err.message}`
+        }) 
+    }
+}
+
+
 module.exports = {
     getMatchedTrades,
-    displayMatchedTrades
+    displayMatchedTrades,
+    displayAllMatchedTrades
 }

@@ -27,7 +27,7 @@ const createOffer = catchAsyncErrors(async(req, res, next) => {
 
         // Creating the offer
         const offer = await Offer.create({
-            rate: parseFloat(rate).toFixed(2),
+            rate: parseFloat(rate),
             from: from,
             to: to,
             amount: amount,
@@ -69,7 +69,7 @@ const getOfferDetails = async (req) => {
     // Remove user field from each offer object
     const offers = offer.map(offer => ({
         _id: offer._id,
-        rate: offer.rate,
+        rate: (offer.rate).toFixed(5),
         from: offer.from,
         to: offer.to,
         amount: offer.amount,
