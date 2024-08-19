@@ -8,49 +8,52 @@ const { formatDate } = require('../utils/formatDate')
 
 // Get the rate
 const displayRate = catchAsyncErrors(async(req, res, next) => {
-    const rate = (await getRate(req)).rate
+    const { rate, rndRate } = await getRate(req)
 
     res.status(200).json({
         success: true,
-        rate
+        rate,
+        rndRate
     })
 })
 
 // Create offer
 const createOffer = catchAsyncErrors(async(req, res, next) => {
-    let { amount, userRate, from, to } = req.body
+    try{
+        let { amount, value, from, to, rate } = req.body
 
-    // Get the rate based on the presence of userRate
-    let rate = userRate ? userRate : (await getRate(req)).rate
+        // Convert offer amount to local string format
+        amount = amount.toLocaleString().replace(/\u202f/g, ',')
 
-    // Calculate the offer value
-    const value = (rate * amount).toLocaleString().replace(/\u202f/g, ',')
-    amount = amount.toLocaleString().replace(/\u202f/g, ',')
+        // Creating the offer
+        const offer = await Offer.create({
+            rate: parseFloat(rate),
+            from: from,
+            to: to,
+            amount: amount,
+            value: value,
+            user: req.user._id,
+            createdAt: Date.now()
+        })
 
-    // Create the offer
-    const offer = await Offer.create({
-        rate: rate,
-        from: from,
-        to: to,
-        amount: amount,
-        value: value,
-        user: req.user._id,
-        createdAt: Date.now()
+        res.status(200).json({
+            success: true,
+            message: "Your Offer has been created successfully",
+            offer
     })
-
-    // Send the response
-    res.status(200).json({
-        success: true,
-        message: "Your Offer has been created successfully",
-        offer
-    })
+    }catch(err){
+        res.status(500).json({
+            success: false,
+            message: err.message
+        })
+    }
 })
 
 // Getting offer details
 const getOfferDetails = async (req) => {
     const offer = await Offer.find({ user: (req.user._id).toString() }).populate(
         'user',
-        'name email city country userName'
+        'name city country userName'
     )
 
     if (offer.length === 0) {
@@ -66,7 +69,7 @@ const getOfferDetails = async (req) => {
     // Remove user field from each offer object
     const offers = offer.map(offer => ({
         _id: offer._id,
-        rate: offer.rate,
+        rate: (offer.rate).toFixed(5),
         from: offer.from,
         to: offer.to,
         amount: offer.amount,
@@ -74,8 +77,6 @@ const getOfferDetails = async (req) => {
         user: user._id,
         createdAt: formatDate({ createdAt: offer.createdAt })
     }))
-
-    // console.log({user, offers})
 
     return {
         user,
