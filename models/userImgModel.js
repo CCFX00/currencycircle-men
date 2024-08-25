@@ -22,5 +22,5 @@ const userImgSchema = new mongoose.Schema({
    }
 }, {timestamps: true})
 
-module.exports = mongoose.model('UserImage', userImgSchema)
+module.exports = mongoose.model('User image', userImgSchema)
  

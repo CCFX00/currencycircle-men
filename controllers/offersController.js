@@ -1,24 +1,9 @@
 const Offer = require('../models/offersModel')
-const User = require('../models/userModel')
-const ErrorHandler = require('../utils/ErrorHandler')
-const catchAsyncErrors = require('../middleware/catchAsyncErrors')
-const { getRate } = require('../utils/getRate')
-const { formatDate } = require('../utils/formatDate')
-
-
-// Get the rate
-const displayRate = catchAsyncErrors(async(req, res, next) => {
-    const { rate, rndRate } = await getRate(req)
-
-    res.status(200).json({
-        success: true,
-        rate,
-        rndRate
-    })
-})
+const MatchedOfferStatus = require('../models/matchedOfferStatusModel')
+const { getOfferDetails } = require('../utils/offersHelper')
 
 // Create offer
-const createOffer = catchAsyncErrors(async(req, res, next) => {
+const createOffer = async(req, res) => {
     try{
         let { amount, value, from, to, rate } = req.body
 
@@ -47,45 +32,10 @@ const createOffer = catchAsyncErrors(async(req, res, next) => {
             message: err.message
         })
     }
-})
-
-// Getting offer details
-const getOfferDetails = async (req) => {
-    const offer = await Offer.find({ user: (req.user._id).toString() }).populate(
-        'user',
-        'name city country userName'
-    )
-
-    if (offer.length === 0) {
-        return {
-            success: false,
-            message: 'You have no offers',
-        }
-    }
-
-    // Extract user information from the first offer
-    const user = offer[0].user || {};
-
-    // Remove user field from each offer object
-    const offers = offer.map(offer => ({
-        _id: offer._id,
-        rate: (offer.rate).toFixed(5),
-        from: offer.from,
-        to: offer.to,
-        amount: offer.amount,
-        value: offer.value,
-        user: user._id,
-        createdAt: formatDate({ createdAt: offer.createdAt })
-    }))
-
-    return {
-        user,
-        offers
-    }
 }
 
-// displayOfferDetails function
-const displayOfferDetails = catchAsyncErrors(async (req, res, next) => {
+// Display Offer Details
+const displayOfferDetails = async (req, res) => {
     const offerDetails = await getOfferDetails(req)
 
     if (offerDetails.success === false) {
@@ -100,11 +50,64 @@ const displayOfferDetails = catchAsyncErrors(async (req, res, next) => {
         user: offerDetails.user,
         offers: offerDetails.offers
     })
-})
+}
+
+// Accepting an offer
+const acceptOffer = async (userId, offerId) => {
+    try {
+        const offer = await Offer.findById(offerId);
+        if (!offer) {
+            throw new Error('Offer not found');
+        }
+
+        await MatchedOfferStatus.findOneAndUpdate(
+            { userId: userId, matchedOfferId: offerId, matchedUserId: offer.user },
+            { isAccepted: true },
+            { upsert: true, new: true }
+        )
+
+        return {
+            success: true,
+            message: 'Offer accepted'
+        }
+    } catch (error) {
+        return {
+            success: false,
+            message: `Error accepting offer: ${error.message}`
+        }
+    }
+}
+
+// Declining an offer
+const declineOffer = async (userId, offerId) => {
+    try {
+        const offer = await Offer.findById(offerId)
+        if (!offer) {
+            throw new Error('Offer not found')
+        }
+
+        await MatchedOfferStatus.findOneAndUpdate(
+            { userId: userId, matchedOfferId: offerId, matchedUserId: offer.user },
+            { isAccepted: false },
+            { upsert: true, new: true }
+        )
+
+        return {
+            success: true,
+            message: 'Offer declined'
+        }
+    } catch (error) {
+        return {
+            success: false,
+            message: `Error declining offer: ${error.message}`
+        }
+    }
+}
+
 
 module.exports = {
-    displayRate,
     createOffer,
-    getOfferDetails,
-    displayOfferDetails
+    displayOfferDetails,
+    acceptOffer,
+    declineOffer
 }

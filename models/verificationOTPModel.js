@@ -16,4 +16,4 @@ const verificationOTPSchema = new mongoose.Schema({
     expiresAt: Date 
 }) 
 
-module.exports = mongoose.model('VerificationOTP', verificationOTPSchema)
+module.exports = mongoose.model('Verification OTP', verificationOTPSchema)

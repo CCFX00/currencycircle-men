@@ -1,6 +1,6 @@
 const app = require('./app')
-const dotenv = require('dotenv')
-const connectDatabase = require('./db/connectDatabase')
+const { createServer } = require('http')
+const { Server } = require('socket.io')
 
 // handling uncaught exceptions
 process.on('uncaughtException', (err) => {
@@ -8,22 +8,37 @@ process.on('uncaughtException', (err) => {
     console.log(`Shutting down server for handling uncaught exception`)
 })
 
-dotenv.config({
+// Importing and invocking the .env module
+require('dotenv').config({
     path: 'config/.env'
 })
 
-// connect to database
-connectDatabase()
+// Importing and connecting to database module
+require('./db/connectDatabase')()
 
-const server = app.listen(process.env._PORT, (req, res) => {
-    console.log(`Server running on http://localhost: ${process.env._PORT}`)
+// Create HTTP server and pass to Socket.IO
+const httpServer = createServer(app)
+const io = new Server(httpServer, {
+    cors: {
+        origin: "*",
+        method: ["GET", "POST", "PUT", "DELETE"]
+    }
+})
+
+// Importing and using the socket handler
+require('./utils/socketHandler')(io)
+
+// Starting HTTP server
+const PORT = process.env._PORT || 3000
+httpServer.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`)
 })
 
 // unhandled promise rejection
 process.on('unhandledRejection', (err) => {
     console.log(`Shutting down server for ${err.message}`)
     console.log(`Shutting down server for unhandled promise rejection`)
-    server.close(() => {
+    httpServer.close(() => {
         process.exit(1)
     })
 })

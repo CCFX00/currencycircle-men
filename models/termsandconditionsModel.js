@@ -7,6 +7,6 @@ const termsAndConditionsSchema = new mongoose.Schema({
   updated_at: { type: Date, default: Date.now }
 });
 
-const TermsAndConditions = mongoose.model('TermsAndCondition', termsAndConditionsSchema);
+const TermsAndConditions = mongoose.model('Terms and conditions', termsAndConditionsSchema);
 
 module.exports = TermsAndConditions;

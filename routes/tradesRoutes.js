@@ -12,7 +12,7 @@ const router = new Router()
 
 //Trade Routes
 router.route('/trade').get(isAuthenticatedUser, getMatchedTrades)
-router.route('/trade/all').get(isAuthenticatedUser, displayAllMatchedTrades)
 router.route('/trade').post(isAuthenticatedUser, displayMatchedTrades)
+router.route('/trade/all').get(isAuthenticatedUser, displayAllMatchedTrades)
 
 module.exports = router

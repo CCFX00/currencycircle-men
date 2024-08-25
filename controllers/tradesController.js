@@ -1,36 +1,6 @@
 const Offer = require('../models/offersModel')
-const { getOfferDetails } = require('./offersController')
+const { matchOffers, getOfferDetails } = require('../utils/offersHelper')
 const { formatDate } = require('../utils/formatDate')
-
-const matchOffers = async (userOffer, allOffers) => {
-    const { from: userFrom, to: userTo, user: userId, value } = userOffer
-    const userOfferValue = parseFloat(value.replace(/,/g, ''))
-
-    // Filter matching offers from all offers
-    const matchingOffers = allOffers.filter(offer => {
-        if (offer.user.toString() !== userId.toString()) {
-            const offerValue = parseFloat(offer.amount.replace(/,/g, ''))
-            const percentageOff = userOfferValue * 0.1
-            const upperBound = userOfferValue + percentageOff
-            const lowerBound = userOfferValue - percentageOff
-            
-            // console.log('\n User Offer Amount:', userOfferAmount)
-            // console.log('Offer Value:', offer.amount)
-            // console.log('Percentage Range: ( lower bound:', lowerBound, '- upper bound:', upperBound, ')')
-            // console.log(offer, '\n')
-
-            // Ensure the offer value is within ±10% range of the user offer value
-            if (offerValue >= lowerBound && offerValue <= upperBound) {
-                return (
-                    offer.from === userTo &&
-                    offer.to === userFrom
-                )
-            }
-        }
-        return false
-    })
-    return matchingOffers
-}
 
 const getMatchedTrades = async (req, res) => {
     try {
@@ -45,14 +15,14 @@ const getMatchedTrades = async (req, res) => {
         }
 
         const matchedOffersArray = await Promise.all(userOffers.map(async userOffer => {
-            const matchingOffers = await matchOffers(userOffer, allOffers)
+            const matchedOffers = await matchOffers(userOffer, allOffers)
 
             // Update matching offers count property
-            userOffer.matchCount = matchingOffers.length.toString() || 0
+            userOffer.matchCount = matchedOffers.length.toString() || 0
 
             return {
                 userOffer,
-                matchingOffers
+                matchedOffers
             }
         })) 
 
@@ -81,14 +51,14 @@ const getMatchedTrades = async (req, res) => {
 const displayMatchedTrades = async (req, res) => {
     try {
         const { userOfferId } = req.body
-        const matchedOffers = await getMatchedTrades(req, null)
+        const matchedOffersArray = await getMatchedTrades(req, null)
 
         // Find the user's matching offers with the specified offerId
-        const matchingOffers = (matchedOffers.find(offer => offer.userOffer._id.toString() === userOfferId.toString())).matchingOffers
+        const matchedOffers = (matchedOffersArray.find(offer => offer.userOffer._id.toString() === userOfferId.toString())).matchedOffers
 
         let matches = []
 
-        const matchedTradesArray = await Promise.all(matchingOffers.map(async matchedOffer => {
+        await Promise.all(matchedOffers.map(async matchedOffer => {
             await matchedOffer.populate(
                 'user',
                 'name city country userName userImage'
@@ -97,7 +67,7 @@ const displayMatchedTrades = async (req, res) => {
             matches.push(matchedOffer)
         }))
 
-        if(matchedTradesArray.length > 0) {
+        if(matches.length > 0) {
             return res.status(200).json({
                 success: true,
                 matches
@@ -105,7 +75,7 @@ const displayMatchedTrades = async (req, res) => {
         }
         return res.status(200).json({
             success: true,
-            message: 'Sorry no matches were found for this offer ID'
+            message: 'Sorry, no matches were found for this offer ID'
         })
     } catch (error) {
         return res.status(500).json({
@@ -116,38 +86,36 @@ const displayMatchedTrades = async (req, res) => {
 }
 
 const displayAllMatchedTrades = async (req, res) => {
-    try{
-        const matchedOffers = await getMatchedTrades(req, null)
+    try {
+        const matchedOffersArray = await getMatchedTrades(req, null)
         
         let allMatchedOffers = []
 
-        for (const userOffer of matchedOffers) {
-            if(userOffer.matchingOffers.length > 0){
-        
-                await Promise.all(userOffer.matchingOffers.map(async matchedOffer => {
-                        await matchedOffer.populate(
-                            'user',
-                            'name city country userName userImage'
-                        )            
-                        matchedOffer.creationDate = formatDate(matchedOffer)
-                    })
-                )
-                allMatchedOffers = allMatchedOffers.concat(userOffer.matchingOffers);
+        for (const userOffer of matchedOffersArray) {
+            if (userOffer.matchedOffers.length > 0) {
+                await Promise.all(userOffer.matchedOffers.map(async matchedOffer => {
+                    await matchedOffer.populate(
+                        'user',
+                        'name city country userName userImage'
+                    )
+                    matchedOffer.creationDate = formatDate(matchedOffer)
+                }))
+                allMatchedOffers = allMatchedOffers.concat(userOffer.matchedOffers)
             }            
-        } 
+        }
 
-        if(allMatchedOffers.length > 0){
+        if (allMatchedOffers.length > 0) {
             res.status(200).json({
                 success: true,
                 allMatchedOffers
             })
-        }else{  
+        } else {  
             res.status(200).json({
                 success: false,
                 message: 'User has no matched offers'
             })                
         }     
-    }catch(err){
+    } catch (err) {
         return res.status(500).json({
             success: false,
             message: `Error getting match trades: ${err.message}`
