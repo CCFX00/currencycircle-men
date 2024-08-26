@@ -73,7 +73,7 @@ const acceptOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwne
                     }
                 ]
             },
-            { isAccepted: true, visibility: 'involved' },
+            { isAccepted: true },
             { upsert: true, new: true }
         )
 
@@ -111,7 +111,7 @@ const declineOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwn
                     }
                 ]
             },
-            { isAccepted: false, visibility: 'hidden' },
+            { isAccepted: false },
             { upsert: true, new: true }
         )
 

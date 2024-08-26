@@ -24,10 +24,6 @@ const matchedOfferStatusSchema = new mongoose.Schema({
     isAccepted: {
         type: Boolean
     },
-    visibility: {
-        type: String,
-        enum: ['involved', 'hidden'],
-    },
     updatedAt: {
         type: Date,
         default: Date.now

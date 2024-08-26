@@ -21,11 +21,11 @@ exports.checkOfferStatus = async (offer, userId, userOfferId) => {
 
     // Handle visibility based on the acceptance or decline status
     if (offerOrLoggedInUserStatus) {
-        if (offerOrLoggedInUserStatus.isAccepted === false && offerOrLoggedInUserStatus.visibility === 'hidden') {
+        if (offerOrLoggedInUserStatus.isAccepted === false) {
             return null // Hide the offer from the logged-in user and offer owner if declined
         }
 
-        if (offerOrLoggedInUserStatus.isAccepted === true && offerOrLoggedInUserStatus.visibility === 'involved') {
+        if (offerOrLoggedInUserStatus.isAccepted === true) {
             return offer // Show the offer only to the logged-in user and offer owner if accepted
         }
     } else {
@@ -45,10 +45,10 @@ exports.checkOfferStatus = async (offer, userId, userOfferId) => {
 
         // Handle cases based on the existing status
         if (existingOfferStatus) {
-            if (existingOfferStatus.isAccepted === true && existingOfferStatus.visibility === 'involved') {
+            if (existingOfferStatus.isAccepted === true) {
                 return null // Hide the offer if it has been accepted by other users
             }
-            if (existingOfferStatus.isAccepted === false && existingOfferStatus.visibility === 'hidden') {
+            if (existingOfferStatus.isAccepted === false) {
                 return offer // if the offer has been declined show the offer except to those involved in the declension
             }
         } else {
