@@ -39,7 +39,7 @@ exports.getOfferDetails = async (req) => {
 
 // Matching the offers
 exports.matchOffers = async (userOffer, allOffers) => {
-    const { from: userOfferFrom, to: userOfferTo, user: userId, value } = userOffer
+    const { from: userOfferFrom, to: userOfferTo, user: userId, value: value, _id: userOfferId } = userOffer
     const userOfferValue = parseFloat(value.replace(/,/g, ''))
 
     // Filter matching offers from all offers
@@ -61,7 +61,7 @@ exports.matchOffers = async (userOffer, allOffers) => {
             }
             return false
         }).map(async offer => {
-            return await checkOfferStatus(offer, userId)
+            return await checkOfferStatus(offer, userId, userOfferId)
         })
     )
 

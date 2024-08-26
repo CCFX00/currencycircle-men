@@ -53,56 +53,81 @@ const displayOfferDetails = async (req, res) => {
 }
 
 // Accepting an offer
-const acceptOffer = async (userId, offerId) => {
+const acceptOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwnerId) => {
     try {
-        const offer = await Offer.findById(offerId);
-        if (!offer) {
-            throw new Error('Offer not found');
-        }
-
-        await MatchedOfferStatus.findOneAndUpdate(
-            { userId: userId, matchedOfferId: offerId, matchedUserId: offer.user },
-            { isAccepted: true },
+        // Update the matched offer status for both users
+        await MatchedOfferStatus.updateMany(
+            { 
+                $or: [
+                    { 
+                        loggedInUserId: userId, 
+                        loggedInUserOfferId: userOfferId, 
+                        matchedOfferOwnerId: matchedOfferOwnerId, 
+                        matchedOfferId: matchedOfferId 
+                    },
+                    { 
+                        loggedInUserId: matchedOfferOwnerId, 
+                        loggedInUserOfferId: matchedOfferId, 
+                        matchedOfferOwnerId: userId, 
+                        matchedOfferId: userOfferId 
+                    }
+                ]
+            },
+            { isAccepted: true, visibility: 'involved' },
             { upsert: true, new: true }
-        )
+        );
 
         return {
             success: true,
             message: 'Offer accepted'
-        }
+        };
     } catch (error) {
         return {
             success: false,
             message: `Error accepting offer: ${error.message}`
-        }
+        };
     }
-}
+};
+
 
 // Declining an offer
-const declineOffer = async (userId, offerId) => {
+const declineOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwnerId) => {
     try {
-        const offer = await Offer.findById(offerId)
-        if (!offer) {
-            throw new Error('Offer not found')
-        }
-
-        await MatchedOfferStatus.findOneAndUpdate(
-            { userId: userId, matchedOfferId: offerId, matchedUserId: offer.user },
-            { isAccepted: false },
+        // Update the matched offer status for both users
+        await MatchedOfferStatus.updateMany(
+            { 
+                $or: [
+                    { 
+                        loggedInUserId: userId, 
+                        loggedInUserOfferId: userOfferId, 
+                        matchedOfferOwnerId: matchedOfferOwnerId, 
+                        matchedOfferId: matchedOfferId 
+                    },
+                    { 
+                        loggedInUserId: matchedOfferOwnerId, 
+                        loggedInUserOfferId: matchedOfferId, 
+                        matchedOfferOwnerId: userId, 
+                        matchedOfferId: userOfferId 
+                    }
+                ]
+            },
+            { isAccepted: false, visibility: 'hidden' },
             { upsert: true, new: true }
-        )
+        );
 
         return {
             success: true,
             message: 'Offer declined'
-        }
+        };
     } catch (error) {
         return {
             success: false,
             message: `Error declining offer: ${error.message}`
-        }
+        };
     }
-}
+};
+
+
 
 
 module.exports = {

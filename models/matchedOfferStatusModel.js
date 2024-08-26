@@ -1,27 +1,36 @@
 const mongoose = require('mongoose')
 
 const matchedOfferStatusSchema = new mongoose.Schema({
-    userId: {
+    loggedInUserId: {
         type: mongoose.Schema.ObjectId,
         ref: "User",
         required: true
     },
+    loggedInUserOfferId: {
+        type: mongoose.Schema.ObjectId,
+        ref: "Offer",
+        required: true
+    },
+    matchedOfferOwnerId: {
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+        required: true
+    },    
     matchedOfferId: {
         type: mongoose.Schema.ObjectId,
         ref: "Offer",
         required: true
     },
-    matchedUserId: {
-        type: mongoose.Schema.ObjectId,
-        ref: "User",
-        required: true
-    },
     isAccepted: {
         type: Boolean
     },
+    visibility: {
+        type: String,
+        enum: ['involved', 'hidden'],
+    },
     updatedAt: {
         type: Date,
-        default: Date.now()
+        default: Date.now
     }
 })
 
