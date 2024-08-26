@@ -17,16 +17,16 @@ exports.checkOfferStatus = async (offer, userId, userOfferId) => {
                 matchedOfferId: userOfferId
             }
         ]
-    });
+    })
 
     // Handle visibility based on the acceptance or decline status
     if (offerOrLoggedInUserStatus) {
         if (offerOrLoggedInUserStatus.isAccepted === false && offerOrLoggedInUserStatus.visibility === 'hidden') {
-            return null; // Hide the offer from the logged-in user and offer owner if declined
+            return null // Hide the offer from the logged-in user and offer owner if declined
         }
 
         if (offerOrLoggedInUserStatus.isAccepted === true && offerOrLoggedInUserStatus.visibility === 'involved') {
-            return offer; // Show the offer only to the logged-in user and offer owner if accepted
+            return offer // Show the offer only to the logged-in user and offer owner if accepted
         }
     } else {
         // Check if the offer has been accepted or declined by other users
@@ -41,23 +41,21 @@ exports.checkOfferStatus = async (offer, userId, userOfferId) => {
                     matchedOfferId: offer._id
                 }
             ]
-        });
+        })
 
         // Handle cases based on the existing status
         if (existingOfferStatus) {
             if (existingOfferStatus.isAccepted === true && existingOfferStatus.visibility === 'involved') {
-                return null; // Hide the offer if it has been accepted by other users
+                return null // Hide the offer if it has been accepted by other users
             }
             if (existingOfferStatus.isAccepted === false && existingOfferStatus.visibility === 'hidden') {
-                return offer; // Hide the offer if it has been accepted by other users
+                return offer // if the offer has been declined show the offer except to those involved in the declension
             }
         } else {
             // If no status is found, it means the offer hasn't been accepted or declined
-            return offer; // Show the offer to everyone
+            return offer // Show the offer to everyone
         }
     }
 
-    return null; // Default to hiding the offer otherwise
-};
-
-
+    return null // Default to hiding the offer otherwise
+}

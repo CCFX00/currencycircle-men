@@ -75,19 +75,19 @@ const acceptOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwne
             },
             { isAccepted: true, visibility: 'involved' },
             { upsert: true, new: true }
-        );
+        )
 
         return {
             success: true,
             message: 'Offer accepted'
-        };
+        }
     } catch (error) {
         return {
             success: false,
             message: `Error accepting offer: ${error.message}`
-        };
+        }
     }
-};
+}
 
 
 // Declining an offer
@@ -113,22 +113,19 @@ const declineOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwn
             },
             { isAccepted: false, visibility: 'hidden' },
             { upsert: true, new: true }
-        );
+        )
 
         return {
             success: true,
             message: 'Offer declined'
-        };
+        }
     } catch (error) {
         return {
             success: false,
             message: `Error declining offer: ${error.message}`
-        };
+        }
     }
-};
-
-
-
+}
 
 module.exports = {
     createOffer,
