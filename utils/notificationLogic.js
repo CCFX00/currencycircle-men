@@ -1,13 +1,15 @@
 const Notification = require('../models/notificationModel')
-const { acceptOffer, declineOffer } = require('./offersHelper')
+const { acceptOffer, declineOffer } = require('../controllers/offersController')
 
 // Function to send a notification
-exports.sendNotification = async (senderId, receiverId, message) => {
+exports.sendNotification = async ({ senderId, recieverId, offerId, message, matchFee }) => {
     try {
         const notification = new Notification({
-            sender: senderId,
-            receiver: receiverId,
-            message
+            senderId,
+            recieverId,
+            offerId,
+            message,
+            matchFee
         })
         await notification.save()
         return notification
@@ -18,9 +20,23 @@ exports.sendNotification = async (senderId, receiverId, message) => {
 }
 
 // Function to get unread notifications for a user
-exports.getUnreadNotifications = async (userId) => {
+exports.getNotifications = async (userId) => {
     try {
-        return await Notification.find({ receiver: userId, isRead: false })
+        return await Notification.find({ 
+            recieverId: userId 
+        })
+    } catch (error) {
+        console.error('Error retrieving notifications:', error)
+        throw error
+    }
+}
+
+// Function to get unread notifications for a user
+exports.checkNotification = async ({ offerId }) => {
+    try {
+        return await Notification.find({ 
+            offerId
+        })
     } catch (error) {
         console.error('Error retrieving notifications:', error)
         throw error
@@ -28,19 +44,31 @@ exports.getUnreadNotifications = async (userId) => {
 }
 
 // Function to mark a notification as read and handle offer acceptance/decline
-exports.markAsRead = async (notificationId, action, userId, offerId) => {
+exports.markAsRead = async ({ userId, userOfferId, matchedOfferId, matchedOfferOwnerId, action }) => {
     try {
-        // Mark the notification as read
-        await Notification.findByIdAndUpdate(notificationId, { isRead: true });
+        // Find both notifications related to the offer
+        const notification = await Notification.findOne({
+            senderId: matchedOfferOwnerId, recieverId: userId, offerId: matchedOfferId
+        });
 
-        // Check if an action is provided and handle offer acceptance/decline
-        if (action && offerId) {
-            if (action === 'accept') {
-                await acceptOffer(userId, offerId)
-            } else if (action === 'decline') {
-                await declineOffer(userId, offerId)
-            }
+        if (!notification) {
+            console.error('No notifications found for the given criteria');
+            return;
         }
+
+        notification.isRead = true
+
+        // Handle offer acceptance or decline
+        if (action === 'accept') {
+            notification.isAccepted = true;
+            await acceptOffer(userId, userOfferId, matchedOfferId, matchedOfferOwnerId);
+        } else if (action === 'decline') {
+            notification.isAccepted = false;
+            await declineOffer(userId, userOfferId, matchedOfferId, matchedOfferOwnerId);
+        }
+
+        // Save the updated notification document
+        await notification.save();
     } catch (error) {
         console.error('Error marking notification as read or updating offer status:', error);
         throw error;

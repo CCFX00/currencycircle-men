@@ -1,5 +1,4 @@
 const app = require('./app')
-const { createServer } = require('http')
 const { Server } = require('socket.io')
 
 // handling uncaught exceptions
@@ -9,30 +8,29 @@ process.on('uncaughtException', (err) => {
 })
 
 // Importing and invocking the .env module
-require('dotenv').config({
+require('dotenv').config({ 
     path: 'config/.env'
 })
 
 // Importing and connecting to database module
 require('./db/connectDatabase')()
 
-// Create HTTP server and pass to Socket.IO
-const httpServer = createServer(app)
-const io = new Server(httpServer, {
+// Starting express server
+const PORT = process.env._PORT || 3000
+const expressServer = app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`)
+})
+
+// Creating a new instance of Socket.IO and passing express server to it
+const io = new Server(expressServer, {
     cors: {
-        origin: "*",
-        method: ["GET", "POST", "PUT", "DELETE"]
+        origin: process.env._NODE_ENV === 'production' ? false : 
+        [`http://localhost:${process.env._FRONTEND_PORT}`, `http://127.0.0.1:${process.env._FRONTEND_PORT}`]
     }
 })
 
 // Importing and using the socket handler
 require('./utils/socketHandler')(io)
-
-// Starting HTTP server
-const PORT = process.env._PORT || 3000
-httpServer.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`)
-})
 
 // unhandled promise rejection
 process.on('unhandledRejection', (err) => {

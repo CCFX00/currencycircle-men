@@ -1,23 +1,35 @@
 const mongoose = require('mongoose')
 
 const notificationSchema = new mongoose.Schema({
-    sender: {
+    senderId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    receiver: {
+    recieverId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
+        required: true
+    },
+    offerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Offer',
         required: true
     },
     message: {
         type: String,
         required: true
     },
+    matchFee: {
+        type: String,
+        required: true
+    },
     isRead: {
         type: Boolean,
         default: false
+    },
+    isAccepted: {
+        type: Boolean
     },
     createdAt: {
         type: Date,

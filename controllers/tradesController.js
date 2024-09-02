@@ -54,7 +54,9 @@ const displayMatchedTrades = async (req, res) => {
         const matchedOffersArray = await getMatchedTrades(req, null)
 
         // Find the user's matching offers with the specified offerId
-        const matchedOffers = (matchedOffersArray.find(offer => offer.userOffer._id.toString() === userOfferId.toString())).matchedOffers
+        const result = (matchedOffersArray.find(offer => offer.userOffer._id.toString() === userOfferId.toString()))
+        const matchedOffers = result.matchedOffers
+        const userOffer = result.userOffer
 
         let matches = []
 
@@ -70,7 +72,8 @@ const displayMatchedTrades = async (req, res) => {
         if(matches.length > 0) {
             return res.status(200).json({
                 success: true,
-                matches
+                matches,
+                userOffer
             })
         }
         return res.status(200).json({
@@ -94,12 +97,17 @@ const displayAllMatchedTrades = async (req, res) => {
         for (const userOffer of matchedOffersArray) {
             if (userOffer.matchedOffers.length > 0) {
                 await Promise.all(userOffer.matchedOffers.map(async matchedOffer => {
+                    // Populate each matched offer with it's user details
                     await matchedOffer.populate(
                         'user',
                         'name city country userName userImage'
                     )
+
+                    // Format the creation date
                     matchedOffer.creationDate = formatDate(matchedOffer)
                 }))
+
+                // Concatenate the matched offers with the overall list
                 allMatchedOffers = allMatchedOffers.concat(userOffer.matchedOffers)
             }            
         }
@@ -113,15 +121,16 @@ const displayAllMatchedTrades = async (req, res) => {
             res.status(200).json({
                 success: false,
                 message: 'User has no matched offers'
-            })                
+            })           
         }     
     } catch (err) {
         return res.status(500).json({
             success: false,
-            message: `Error getting match trades: ${err.message}`
-        }) 
+            message: `Error getting matched trades: ${err.message}`
+        })
     }
 }
+
 
 
 module.exports = {

@@ -55,6 +55,7 @@ const displayOfferDetails = async (req, res) => {
 // Accepting an offer
 const acceptOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwnerId) => {
     try {
+        console.log(userId, userOfferId, matchedOfferId, matchedOfferOwnerId)
         // Update the matched offer status for both users
         await MatchedOfferStatus.updateMany(
             { 
@@ -72,8 +73,15 @@ const acceptOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwne
                         matchedOfferId: userOfferId 
                     }
                 ]
+            },{ 
+                $set: { 
+                    loggedInUserId: userId, 
+                    loggedInUserOfferId: userOfferId, 
+                    matchedOfferOwnerId: matchedOfferOwnerId, 
+                    matchedOfferId: matchedOfferId,
+                    isAccepted: true
+                } 
             },
-            { isAccepted: true },
             { upsert: true, new: true }
         )
 
@@ -110,8 +118,15 @@ const declineOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwn
                         matchedOfferId: userOfferId 
                     }
                 ]
+            },{ 
+                $set: { 
+                    loggedInUserId: userId, 
+                    loggedInUserOfferId: userOfferId, 
+                    matchedOfferOwnerId: matchedOfferOwnerId, 
+                    matchedOfferId: matchedOfferId,
+                    isAccepted: false
+                } 
             },
-            { isAccepted: false },
             { upsert: true, new: true }
         )
 
