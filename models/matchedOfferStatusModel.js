@@ -24,6 +24,9 @@ const matchedOfferStatusSchema = new mongoose.Schema({
     isAccepted: {
         type: Boolean
     },
+    creationDate: {
+        type: String
+    },
     updatedAt: {
         type: Date,
         default: Date.now

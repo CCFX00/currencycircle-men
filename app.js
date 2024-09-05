@@ -19,6 +19,7 @@ const deviceInfoRoutes = require('./routes/deviceInfoRoutes')
 const offersRoutes = require('./routes/offersRoute')
 const tradesRoutes = require('./routes/tradesRoutes')
 const ratesRoutes = require('./routes/ratesRoutes')
+const discussionRoutes = require('./routes/discussionRoutes')
 
 app.use('/ccfx/api/v1', userRoutes)
 app.use('/ccfx/api/v1', ssoGoogleRoutes)
@@ -27,6 +28,7 @@ app.use('/ccfx/api/v1', deviceInfoRoutes)
 app.use('/ccfx/api/v1', offersRoutes)
 app.use('/ccfx/api/v1', tradesRoutes)
 app.use('/ccfx/api/v1', ratesRoutes)
+app.use('/ccfx/api/v1', discussionRoutes)
 
 
 app.use(ErrorHandler)

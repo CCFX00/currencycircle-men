@@ -1,4 +1,5 @@
 const notificationLogic = require('./notificationLogic')
+const { getAllInDiscussionTrades } = require('../controllers/discussionController')
 
 // Create a Map to store userId and socketId pairs
 const userSocketMap = new Map()
@@ -53,6 +54,12 @@ module.exports = function(io) {
                 await notificationLogic.markAsRead(data)
                 // io.to(matchedOfferOwnerId).emit('offerDeclined', {});
             })
+
+            // Getting a trade in discussion
+            // socket.on('getAllTradesInDiscussion', async () => {
+            //     const allTradesInDiscussion = await getAllInDiscussionTrades()
+            //     socket.emit('recieveAllTradesInDiscussion', allTradesInDiscussion)
+            // })
         } catch (error) {
             console.error('Error handling notifications:', error)
         }  

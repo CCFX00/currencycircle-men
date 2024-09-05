@@ -1,5 +1,5 @@
-const formatDate = function({ createdAt }){
-    const createdAtString = createdAt
+const formatDate = function({ createdAt, updatedAt }){
+    const createdAtString = createdAt || updatedAt
     const creationDate = new Date(createdAtString)
 
     const day = creationDate.getDate()
