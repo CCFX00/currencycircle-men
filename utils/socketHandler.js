@@ -1,4 +1,5 @@
-const notificationLogic = require('./notificationLogic')
+const notificationLogic = require('../controllers/notificationController')
+const ChatController = require('../controllers/chatController');
 
 // Create a Map to store userId and socketId pairs
 const userSocketMap = new Map()
@@ -20,9 +21,11 @@ module.exports = function(io) {
         socket.join(userSocketId) // Join a room for the user based on their socketIDs
         console.log("A user connected with id " + userId + " and socket id " + socket.id)
 
-
-        // Try catch block to handle asynchronous operations like database queries
         try {
+            // ======================
+            // Notification Logic
+            // ======================
+
             // Listen for new notifications to send in real-time
             socket.on("sendNotification", async (data) => {
                 const notification = await notificationLogic.sendNotification(data)
@@ -53,7 +56,29 @@ module.exports = function(io) {
                 await notificationLogic.markAsRead(data)
                 // io.to(matchedOfferOwnerId).emit('offerDeclined', {});
             })
-            
+
+
+            // ======================
+            // Chat Logic
+            // ======================
+
+            // Join a chat room (roomId can be a combination of user IDs)
+            socket.on('chatMessage', async (msgData) => {
+                const { roomId, message, senderId } = msgData;
+                
+                // Save the message via the chat controller
+                const savedMessage = await ChatController.saveMessage(roomId, senderId, message);
+
+                // Broadcast the message to everyone in the room
+                io.to(roomId).emit('message', savedMessage);
+            });
+
+            // Fetch chat history for a specific room
+            socket.on('fetchChatHistory', async (roomId) => {
+                const chatHistory = await ChatController.getChatHistory(roomId);
+                socket.emit('chatHistory', chatHistory);
+            });
+
         } catch (error) {
             console.error('Error handling notifications:', error)
         }  

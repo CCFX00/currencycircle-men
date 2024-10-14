@@ -1,5 +1,5 @@
 const Notification = require('../models/notificationModel')
-const { acceptOffer, declineOffer } = require('../controllers/offersController')
+const { acceptOffer, declineOffer } = require('./offersController')
 
 // Function to send a notification
 exports.sendNotification = async ({ senderId, recieverId, offerId, message, matchFee }) => {
