@@ -22,11 +22,9 @@ module.exports = function(io) {
         console.log("A user connected with id " + userId + " and socket id " + socket.id)
 
         try {
-            // ======================
-            // Notification Logic
-            // ======================
 
-            // Listen for new notifications to send in real-time
+            // (Notification Logic) Listen for new notifications to send in real-time
+            //======================================================================//
             socket.on("sendNotification", async (data) => {
                 const notification = await notificationLogic.sendNotification(data)
                 recieverSocketId = getUserSocketId(data.recieverId)
@@ -58,34 +56,66 @@ module.exports = function(io) {
             })
 
 
-            // ======================
-            // Chat Logic
-            // ======================
-
-            // Join a chat room (roomId can be a combination of user IDs)
-            socket.on('chatMessage', async (msgData) => {
-                const { roomId, message, senderId } = msgData;
-                
-                // Save the message via the chat controller
-                const savedMessage = await ChatController.saveMessage(roomId, senderId, message);
-
-                // Broadcast the message to everyone in the room
-                io.to(roomId).emit('message', savedMessage);
+            // (Chat Logic) Join chat room and fetch it's chat history 
+            //========================================================//
+            socket.on('joinRoom', async ({ roomId, senderName: userName }) => {
+                // Leave all other rooms except the default room (socket.id)
+                for (let room of socket.rooms) {
+                    if (room !== socket.id && room !== roomId) {
+                        socket.leave(room);
+                        io.to(roomId).emit('userLeft', { userId, message: `User ${userName} has left the chat room: ${roomId}` })
+                    }
+                }
+            
+                // Check if the user is not already in the room
+                if (!socket.rooms.has(roomId)) {
+                    socket.join(roomId);
+                    // console.log(`User: ${userId} has joined room: ${roomId}`);               
+                    const chatHistory = await ChatController.getChatHistory(roomId);
+                    socket.emit('chatHistory', chatHistory);                    
+                } else {
+                    console.log(`User: ${userId} is already in room: ${roomId}`);
+                }
             });
+                      
 
-            // Fetch chat history for a specific room
-            socket.on('fetchChatHistory', async (roomId) => {
-                const chatHistory = await ChatController.getChatHistory(roomId);
-                socket.emit('chatHistory', chatHistory);
-            });
+            // Save messages
+            socket.on('saveMessage', async (data) => {
+                data = { ...data, userId }
+                const info = await ChatController.saveMessage(data)
 
+                // Send error message if it contains profanity
+                if (info.success === 'false'){
+                    socket.emit('error', info.message); 
+                    return
+                }
+ 
+                // Broadcast the saved message to everyone in the room
+                io.to(data.roomId).emit('newMessage', info.savedMessage)
+            })
+
+            // Show activity
+            socket.on('typing', async({ roomId, userName })=>{
+                io.to(roomId).emit('typing', { userName })
+            })
+
+            // Leave chat room
+            socket.on('leaveRoom', async ({ roomId, senderName: userName }) => {
+                socket.leave(roomId) // User leaves the specified room
+
+                // Optionally notify other users in the room
+                io.to(roomId).emit('userLeft', { userId, message: `User ${userName} has left the chat room: ${roomId}` })
+            })
+    
         } catch (error) {
             console.error('Error handling notifications:', error)
         }  
+        
         // Handle logout event
         socket.on('userLogout', () => {
-            console.log(`User ${userId} is logged out`)
+            userSocketMap.delete(userId)
             socket.disconnect()
+            console.log(`User ${userId} is logged out`)       
         })
     })
 }

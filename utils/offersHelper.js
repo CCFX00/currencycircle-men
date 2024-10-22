@@ -1,5 +1,5 @@
 const Offer = require('../models/offersModel')
-const { formatDate } = require('./formatDate')
+const { formatDate } = require('./dateTime')
 const { checkOfferStatus } = require('./checkOfferStatus')
 
 // Getting offer details

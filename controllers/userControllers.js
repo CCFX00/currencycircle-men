@@ -11,7 +11,7 @@ const { checkTsCs } = require('../utils/checkTsCs')
 const { genOTP, sendOTP, verifyOTP, resendOTP } = require('../utils/otpLogic')
 const { sendMail, genMail } = require('../utils/mailLogic')
 const crypto = require("crypto");
-const { formatDate } = require('../utils/formatDate')
+const { formatDate } = require('../utils/dateTime')
 const Offer = require('../models/offersModel')
 
 // Getting all users

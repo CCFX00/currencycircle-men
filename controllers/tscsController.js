@@ -49,7 +49,6 @@ const tscsGet = async (req, res) => {
 const getLatestTcs = async (req, res) => {
     try {
         const terms = await TermsAndConditions.find().sort({ updated_at: -1 }).limit(1)
-        console.log(terms)
         
         if (!terms || terms.length == 0) {
             res.status(404).json({ error: 'Terms and conditions not found' });

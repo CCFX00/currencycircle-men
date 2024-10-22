@@ -1,5 +1,5 @@
 const MatchedOfferStatus = require('../models/matchedOfferStatusModel')
-const { formatDate } = require('../utils/formatDate')
+const { formatDate } = require('../utils/dateTime')
 
 exports.getInDiscussionTrade = async(req, res) => {
     try{
@@ -25,9 +25,9 @@ exports.getInDiscussionTrade = async(req, res) => {
                 ]            
             }
         ).populate([
-            { path: 'loggedInUserId', select: 'name city userImage' },  // Populate `loggedInUserId`
+            { path: 'loggedInUserId', select: 'name userName city userImage' },  // Populate `loggedInUserId`
             { path: 'matchedOfferId', select: 'rate from to amount value' },  // Populate `matchedOfferId`
-            { path: 'matchedOfferOwnerId', select: 'name city userImage' }  // Populate `matchedOfferOwnerId`
+            { path: 'matchedOfferOwnerId', select: 'name userName city userImage' }  // Populate `matchedOfferOwnerId`
         ])
 
         if (!inDiscussionTrade) {
@@ -62,9 +62,9 @@ exports.getAllInDiscussionTrades = async(req, res) => {
             ]
         })
         .populate([
-            { path: 'loggedInUserId', select: 'name city userImage currency' },  // Populate `loggedInUserId`
+            { path: 'loggedInUserId', select: 'name userName city userImage currency' },  // Populate `loggedInUserId`
             { path: 'matchedOfferId', select: 'rate from to amount value' },  // Populate `matchedOfferId`
-            { path: 'matchedOfferOwnerId', select: 'name city userImage currency' }  // Populate `matchedOfferOwnerId`
+            { path: 'matchedOfferOwnerId', select: 'name userName city userImage currency' }  // Populate `matchedOfferOwnerId`
         ])
 
         if (!inDiscussionTrades) {

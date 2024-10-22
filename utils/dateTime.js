@@ -14,6 +14,16 @@ const formatDate = function({ createdAt, updatedAt }){
     return `${day} ${month}, ${year}`
 }
 
+const genDateTime = function(){
+    // Get current date and time
+    const now = new Date();
+    const date = now.toLocaleDateString(); // Format: e.g., '10/16/2024'
+    const time = now.toLocaleTimeString(); // Format: e.g., '4:30:00 PM'
+
+    return { date, time }
+}
+
 module.exports = {
-    formatDate
+    formatDate,
+    genDateTime
 }

@@ -1,6 +1,6 @@
 const Offer = require('../models/offersModel')
 const { matchOffers, getOfferDetails } = require('../utils/offersHelper')
-const { formatDate } = require('../utils/formatDate')
+const { formatDate } = require('../utils/dateTime')
 
 const getMatchedTrades = async (req, res) => {
     try {
