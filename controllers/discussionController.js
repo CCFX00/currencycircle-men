@@ -75,6 +75,11 @@ exports.getAllInDiscussionTrades = async(req, res) => {
 
         // Update `updatedAt` field by formatting the date
         inDiscussionTrades.map(discussion => {
+            // If the currently logged-in user is in the `matchedOfferOwnerId`, swap the roles
+            if (String(discussion.matchedOfferOwnerId._id) === String(userId)) {
+                // Swap loggedInUserId and matchedOfferOwnerId
+                [discussion.loggedInUserId, discussion.matchedOfferOwnerId] = [discussion.matchedOfferOwnerId, discussion.loggedInUserId];
+            }
             discussion.creationDate = formatDate(discussion)
             return discussion
         })

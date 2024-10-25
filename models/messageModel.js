@@ -17,16 +17,16 @@ const messageSchema = new mongoose.Schema({
     senderImage: {
         type: String
     },
-    recieverId: {
+    receiverId: {
         type: mongoose.Schema.ObjectId,
         ref: "User",
         required: true
     },
-    recieverName: {
+    receiverName: {
         type: String, 
         required: true 
     },
-    recieverImage: {
+    receiverImage: {
         type: String
     },
     message: { 

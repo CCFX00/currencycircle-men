@@ -4,7 +4,7 @@ const { checkProfanity } = require('../utils/profanityFilter')
 const { genDateTime } = require('../utils/dateTime')
 
 // Save a new message to the chat (encrypt the message)
-exports.saveMessage = async ({ roomId, userId, message, senderName, senderImage, recieverId, recieverName, recieverImage }) => {
+exports.saveMessage = async ({ roomId, userId, message, senderName, senderImage, receiverId, receiverName, receiverImage }) => {
     try {
         // Check for profanity in message
         const foundProfanityList = await checkProfanity(message) 
@@ -28,9 +28,9 @@ exports.saveMessage = async ({ roomId, userId, message, senderName, senderImage,
             senderId: userId,
             senderName,
             senderImage,
-            recieverId,
-            recieverName,
-            recieverImage,
+            receiverId,
+            receiverName,
+            receiverImage,
             date,
             time,
             createdAt: Date.now(),

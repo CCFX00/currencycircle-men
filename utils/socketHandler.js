@@ -76,27 +76,27 @@ module.exports = function(io) {
                 } else {
                     console.log(`User: ${userId} is already in room: ${roomId}`);
                 }
-            });
-                      
+            });                      
 
             // Save messages
             socket.on('saveMessage', async (data) => {
                 data = { ...data, userId }
-                const info = await ChatController.saveMessage(data)
+                const { success, message, savedMessage } = await ChatController.saveMessage(data)
 
                 // Send error message if it contains profanity
-                if (info.success === 'false'){
-                    socket.emit('error', info.message); 
+                if (success === false){
+                    socket.emit('error', {message});                     
                     return
                 }
  
                 // Broadcast the saved message to everyone in the room
-                io.to(data.roomId).emit('newMessage', info.savedMessage)
+                io.to(data.roomId).emit('newMessage', savedMessage)
             })
 
             // Show activity
-            socket.on('typing', async({ roomId, userName })=>{
-                io.to(roomId).emit('typing', { userName })
+            socket.on('typing', async({ roomId, senderName })=>{
+                // socket.to(roomId).broadcast.emit('typing', { senderName });
+                socket.to(roomId).emit('typing', { senderName });
             })
 
             // Leave chat room
@@ -106,7 +106,7 @@ module.exports = function(io) {
                 // Optionally notify other users in the room
                 io.to(roomId).emit('userLeft', { userId, message: `User ${userName} has left the chat room: ${roomId}` })
             })
-    
+                
         } catch (error) {
             console.error('Error handling notifications:', error)
         }  
