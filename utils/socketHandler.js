@@ -106,6 +106,60 @@ module.exports = function(io) {
                 // Optionally notify other users in the room
                 io.to(roomId).emit('userLeft', { userId, message: `User ${userName} has left the chat room: ${roomId}` })
             })
+
+
+            // Complete | Withdraw from trade | Notification handling
+            //=======================================================
+
+            // Handle trade completion
+            socket.on('markTradeComplete', (data) => {
+                // Assuming you have trade details such as tradeId, etc.
+                console.log('Trade marked as complete by:', socket.id);
+
+                // You can do additional logic here, such as updating the trade status in the database
+                const tradeId = data.tradeId;  // Get trade ID from client data
+                if (tradeId) {
+                    // Update trade status in database (pseudo-code)
+                    // await TradeModel.update({ status: 'completed' }, { where: { id: tradeId } });
+
+                    // Notify other involved users
+                    socket.to(data.counterpartySocketId).emit('tradeCompleteNotification', {
+                        message: 'The trade has been marked as complete.'
+                    });
+
+                    console.log(`Trade ${tradeId} marked as complete.`);
+                }
+            });
+
+            // Handle withdraw from trade
+            socket.on('withdrawTrade', (data) => {
+                console.log('Trade withdrawal initiated by:', socket.id);
+
+                const tradeId = data.tradeId;  // Example tradeId passed from client
+                if (tradeId) {
+                    // Handle trade withdrawal (pseudo-code)
+                    // await TradeModel.update({ status: 'withdrawn' }, { where: { id: tradeId } });
+
+                    // Notify other users involved in the trade
+                    socket.to(data.counterpartySocketId).emit('withdrawNotification', {
+                        message: 'Your trade partner has withdrawn from the trade.',
+                    });
+
+                    console.log(`User ${socket.id} withdrew from trade ${tradeId}.`);
+                }
+            });
+
+            // Handle withdrawal notification from trade
+            socket.on('withdrawTradeNotification', (data) => {
+                console.log('Withdrawal notification received for trade:', data.tradeId);
+
+                // Notify the user that their counterparty wants to withdraw from the trade
+                socket.to(data.counterpartySocketId).emit('withdrawTradeRequest', {
+                    message: 'Your counterparty wants to withdraw from the trade.',
+                });
+
+                console.log(`Withdrawal request notification sent to counterparty for trade ${data.tradeId}.`);
+            });
                 
         } catch (error) {
             console.error('Error handling notifications:', error)
