@@ -33,4 +33,4 @@ const matchedOfferStatusSchema = new mongoose.Schema({
     }
 })
 
-module.exports = mongoose.model('Matched offer status', matchedOfferStatusSchema)
+module.exports = mongoose.model('Matched Offer Status', matchedOfferStatusSchema)

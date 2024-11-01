@@ -34,7 +34,7 @@ exports.saveMessage = async ({ roomId, userId, message, senderName, senderImage,
             date,
             time,
             createdAt: Date.now(),
-            expiresAt: Date.now() + (2 * 365 * 24 * 60 * 60 * 1000) // Message expires in 2 years
+            expiresAt: Date.now() + (2 * 365 * 24 * 60 * 60 * 1000) // Set duration to 2 years
         })
 
         let savedMessage = await newMessage.save()

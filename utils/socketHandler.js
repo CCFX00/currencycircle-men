@@ -1,4 +1,4 @@
-const notificationLogic = require('../controllers/notificationController')
+const notificationLogic = require('../controllers/matchNotificationController')
 const ChatController = require('../controllers/chatController');
 
 // Create a Map to store userId and socketId pairs
@@ -26,33 +26,33 @@ module.exports = function(io) {
             // (Notification Logic) Listen for new notifications to send in real-time
             //======================================================================//
             socket.on("sendNotification", async (data) => {
-                const notification = await notificationLogic.sendNotification(data)
-                recieverSocketId = getUserSocketId(data.recieverId)
-                io.to(recieverSocketId).emit('newNotification', notification)
+                const notification = await notificationLogic.sendMatchNotification(data)
+                receiverSocketId = getUserSocketId(data.recieverId)
+                io.to(receiverSocketId).emit('newNotification', notification)
             })  
 
             // Check if offer has any notifications, to ensure that the corresponding user gets the notification
             socket.on('checkNotification', async (data) => {
-                const notifications = await notificationLogic.checkNotification(data)
+                const notifications = await notificationLogic.checkMatchNotification(data)
                 socket.emit('recieveNotification', notifications)
             })
 
             // Fetch notifications for the connected user
             socket.on('fetchNotifications', async () => {
-                const notifications = await notificationLogic.getNotifications(userId)
+                const notifications = await notificationLogic.getMatchNotifications(userId)
                 socket.emit('notifications', notifications)
             })
 
             // Accepting an offer
             socket.on('acceptOffer', async (data) => {
-                await notificationLogic.markAsRead(data)
-                // io.to(matchedOfferOwnerId).emit('offerAccepted', {});
+                receiverSocketId = getUserSocketId(data.matchedOfferOwnerId) // Extracting receiver's socketId
+                await notificationLogic.markMatchNotificationAsRead({ ...data, io, receiverSocketId })
             })
     
             // Declining an offer
             socket.on('declineOffer', async (data) => {
-                await notificationLogic.markAsRead(data)
-                // io.to(matchedOfferOwnerId).emit('offerDeclined', {});
+                receiverSocketId = getUserSocketId(data.matchedOfferOwnerId) // Extracting receiver's socketId
+                await notificationLogic.markMatchNotificationAsRead({ ...data, io, receiverSocketId })
             })
 
 
@@ -70,9 +70,12 @@ module.exports = function(io) {
                 // Check if the user is not already in the room
                 if (!socket.rooms.has(roomId)) {
                     socket.join(roomId);
-                    // console.log(`User: ${userId} has joined room: ${roomId}`);               
+                    console.log(`User: ${userId} has joined room: ${roomId}`);               
                     const chatHistory = await ChatController.getChatHistory(roomId);
-                    socket.emit('chatHistory', chatHistory);                    
+                    socket.emit('chatHistory', chatHistory);   
+                    
+                    // Check for notifications
+
                 } else {
                     console.log(`User: ${userId} is already in room: ${roomId}`);
                 }
@@ -112,53 +115,30 @@ module.exports = function(io) {
             //=======================================================
 
             // Handle trade completion
-            socket.on('markTradeComplete', (data) => {
-                // Assuming you have trade details such as tradeId, etc.
-                console.log('Trade marked as complete by:', socket.id);
-
-                // You can do additional logic here, such as updating the trade status in the database
-                const tradeId = data.tradeId;  // Get trade ID from client data
+            socket.on('markTradeComplete', ({ roomId, tradeId, senderId, senderName, action }) => {
                 if (tradeId) {
-                    // Update trade status in database (pseudo-code)
-                    // await TradeModel.update({ status: 'completed' }, { where: { id: tradeId } });
+                    
+                    if(action === 'sender'){
+                        
+                        socket.to(roomId).emit('completeTradeNotif', { senderName, from: 'sender', message: 'hello there' });
+                    }
+                    
+                    if(action === 'receiver'){
 
-                    // Notify other involved users
-                    socket.to(data.counterpartySocketId).emit('tradeCompleteNotification', {
-                        message: 'The trade has been marked as complete.'
-                    });
-
-                    console.log(`Trade ${tradeId} marked as complete.`);
+                        // socket.to(roomId).emit('completeTradeNotif', { senderName, from: 'receiver' });
+                    }          
                 }
             });
 
-            // Handle withdraw from trade
-            socket.on('withdrawTrade', (data) => {
-                console.log('Trade withdrawal initiated by:', socket.id);
-
-                const tradeId = data.tradeId;  // Example tradeId passed from client
+            // Handle withdraw from trade or Cancel trade
+            socket.on('withdrawTrade', ({ roomId, tradeId, senderId, senderName, action }) => {
                 if (tradeId) {
-                    // Handle trade withdrawal (pseudo-code)
-                    // await TradeModel.update({ status: 'withdrawn' }, { where: { id: tradeId } });
+                    if(action === 'sender') {
 
-                    // Notify other users involved in the trade
-                    socket.to(data.counterpartySocketId).emit('withdrawNotification', {
-                        message: 'Your trade partner has withdrawn from the trade.',
-                    });
-
-                    console.log(`User ${socket.id} withdrew from trade ${tradeId}.`);
+                        
+                        socket.to(roomId).emit('withdrawTradeNotification', { senderName });
+                    }
                 }
-            });
-
-            // Handle withdrawal notification from trade
-            socket.on('withdrawTradeNotification', (data) => {
-                console.log('Withdrawal notification received for trade:', data.tradeId);
-
-                // Notify the user that their counterparty wants to withdraw from the trade
-                socket.to(data.counterpartySocketId).emit('withdrawTradeRequest', {
-                    message: 'Your counterparty wants to withdraw from the trade.',
-                });
-
-                console.log(`Withdrawal request notification sent to counterparty for trade ${data.tradeId}.`);
             });
                 
         } catch (error) {

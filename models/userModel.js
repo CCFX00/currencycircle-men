@@ -148,6 +148,12 @@ const userSchema = new mongoose.Schema({
   joinedAt: {
     type: String
   },
+  averageValueTransacted: {
+    type: String
+  },
+  timesReported: {
+    type: String
+  },
   tcs: {
     type: Boolean,
     required: [true, 'Terms and Conditions field cannot be left empty. Value must either be either true or false'],

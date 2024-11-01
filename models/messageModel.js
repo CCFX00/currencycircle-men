@@ -1,9 +1,10 @@
 const mongoose = require('mongoose')
 
 const messageSchema = new mongoose.Schema({
-    roomId: { 
-        type: String, 
-        required: true 
+    roomId: {
+        type: mongoose.Schema.ObjectId,
+        ref: "Matched Offer Status",
+        required: true
     },
     senderId: {
         type: mongoose.Schema.ObjectId,

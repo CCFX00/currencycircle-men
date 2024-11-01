@@ -1,6 +1,8 @@
 const Offer = require('../models/offersModel')
 const { matchOffers, getOfferDetails } = require('../utils/offersHelper')
 const { formatDate } = require('../utils/dateTime')
+const TradeStatus = require('../models/tradeStatusModel')
+const TradeNotification = require('../models/tradeNotificationModel')
 
 const getMatchedTrades = async (req, res) => {
     try {
@@ -130,6 +132,134 @@ const displayAllMatchedTrades = async (req, res) => {
         })
     }
 }
+
+// Mark trade as completed
+const completeTrade = async ({ tradeId, userId }) => {
+    try {
+        const tradeStatus = await TradeStatus.findOne({ tradeId });
+
+        if (!tradeStatus) {
+            return { 
+                success: false, 
+                message: 'Trade not found' 
+            }
+        }
+
+        // Update completion status based on sender or receiver role
+        if (tradeStatus.senderId.toString() === userId) {
+            tradeStatus.senderCompleted = true;
+            tradeStatus.status = 'pendingPartial';
+        } else if (tradeStatus.receiverId.toString() === userId) {
+            tradeStatus.receiverCompleted = true;
+            tradeStatus.status = 'pendingPartial';
+        }
+
+        // Check if both parties have marked the tradeStatus as complete
+        if (tradeStatus.senderCompleted && tradeStatus.receiverCompleted) {
+            tradeStatus.status = 'completed';
+        }
+
+        tradeStatus.updatedAt = Date.now();
+        await tradeStatus.save();
+
+        return {
+            success: true,
+            message: tradeStatus.status === 'completed' ? 'Trade marked as completed' : 'Awaiting confirmation from the counterparty',
+            tradeStatus,
+        }
+    } catch (error) {
+        return { 
+            success: false, 
+            message: `Error completing trade: ${error.message}` 
+        }
+    }
+}
+
+// Cancel a trade
+const cancelTrade = async ({ tradeId, userId }) => {
+    try {
+        const trade = await TradeStatus.findOne({ tradeId });
+
+        if (!trade) {
+            return { 
+                success: false, 
+                message: 'Trade not found'
+            };
+        }
+
+        // Mark trade as cancelled immediately when any party initiates cancellation
+        trade.status = 'cancelled';
+        trade.updatedAt = Date.now();
+        await trade.save();
+
+        return {
+            success: true,
+            message: 'Trade has been cancelled',
+            trade,
+        }
+    } catch (error) {
+        return { 
+            success: false, 
+            message: `Error cancelling trade: ${error.message}` 
+        }
+    }
+}
+
+// Get all completed trades
+const getAllCompletedTrades = async ({ userId }) => {
+    try {
+        const completedTrades = await TradeStatus.find({ senderId: userId, status: "completed" })
+            .populate('senderId', 'name userName') // Populates sender details if needed
+            .populate('receiverId', 'name userName'); // Populates receiver details if needed
+
+        if (completedTrades.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: 'No completed trades found',
+                completedTrades: []
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            completedTrades
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: `Error fetching completed trades: ${error.message}`
+        });
+    }
+};
+
+// Get all cancelled trades
+const getAllCancelledTrades = async ({ userId }) => {
+    try {
+        const cancelledTrades = await TradeStatus.find({ senderId: userId, status: "cancelled" })
+            .populate('senderId', 'name userName') // Populates sender details if needed
+            .populate('receiverId', 'name userName'); // Populates receiver details if needed
+
+        if (cancelledTrades.length === 0) {
+            return {
+                success: true,
+                message: 'No cancelled trades found',
+                cancelledTrades: []
+            }
+        }
+
+        return {
+            success: true,
+            cancelledTrades
+        }
+    } catch (error) {
+        return {
+            success: false,
+            message: `Error fetching cancelled trades: ${error.message}`
+        }
+    }
+};
+
+
 
 
 

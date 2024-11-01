@@ -1,6 +1,7 @@
 const Offer = require('../models/offersModel')
 const MatchedOfferStatus = require('../models/matchedOfferStatusModel')
 const { getOfferDetails } = require('../utils/offersHelper')
+const { startTradeCountdown } = require('../utils/timer')
 
 // Create offer
 const createOffer = async(req, res) => {
@@ -53,11 +54,10 @@ const displayOfferDetails = async (req, res) => {
 }
 
 // Accepting an offer
-const acceptOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwnerId) => {
+const acceptOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwnerId, io, receiverSocketId) => {
     try {
-        console.log(userId, userOfferId, matchedOfferId, matchedOfferOwnerId)
         // Update the matched offer status for both users
-        await MatchedOfferStatus.updateMany(
+    const { upsertedId } = await MatchedOfferStatus.updateMany(
             { 
                 $or: [
                     { 
@@ -84,6 +84,9 @@ const acceptOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwne
             },
             { upsert: true, new: true }
         )
+                
+        // Starting the countdown function
+        startTradeCountdown({ io, tradeId: upsertedId, receiverSocketId })
 
         return {
             success: true,
@@ -99,7 +102,7 @@ const acceptOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwne
 
 
 // Declining an offer
-const declineOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwnerId) => {
+const declineOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwnerId, io, receiverSocketId) => {
     try {
         // Update the matched offer status for both users
         await MatchedOfferStatus.updateMany(
