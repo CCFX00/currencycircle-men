@@ -1,5 +1,6 @@
-const notificationLogic = require('../controllers/matchNotificationController')
-const ChatController = require('../controllers/chatController');
+const matchOfferNotificationLogic = require('../controllers/matchOfferNotificationController')
+const chatController = require('../controllers/chatController');
+const tradesController = require('../controllers/tradesController');
 
 // Create a Map to store userId and socketId pairs
 const userSocketMap = new Map()
@@ -26,33 +27,33 @@ module.exports = function(io) {
             // (Notification Logic) Listen for new notifications to send in real-time
             //======================================================================//
             socket.on("sendNotification", async (data) => {
-                const notification = await notificationLogic.sendMatchNotification(data)
+                const notification = await matchOfferNotificationLogic.sendOfferNotification(data)
                 receiverSocketId = getUserSocketId(data.recieverId)
                 io.to(receiverSocketId).emit('newNotification', notification)
             })  
 
             // Check if offer has any notifications, to ensure that the corresponding user gets the notification
             socket.on('checkNotification', async (data) => {
-                const notifications = await notificationLogic.checkMatchNotification(data)
+                const notifications = await matchOfferNotificationLogic.checkOfferNotification(data)
                 socket.emit('recieveNotification', notifications)
             })
 
             // Fetch notifications for the connected user
             socket.on('fetchNotifications', async () => {
-                const notifications = await notificationLogic.getMatchNotifications(userId)
+                const notifications = await matchOfferNotificationLogic.getOfferNotifications(userId)
                 socket.emit('notifications', notifications)
             })
 
             // Accepting an offer
             socket.on('acceptOffer', async (data) => {
                 receiverSocketId = getUserSocketId(data.matchedOfferOwnerId) // Extracting receiver's socketId
-                await notificationLogic.markMatchNotificationAsRead({ ...data, io, receiverSocketId })
+                await matchOfferNotificationLogic.markOfferNotificationAsRead({ ...data, io, receiverSocketId, userSocketId })
             })
     
             // Declining an offer
             socket.on('declineOffer', async (data) => {
                 receiverSocketId = getUserSocketId(data.matchedOfferOwnerId) // Extracting receiver's socketId
-                await notificationLogic.markMatchNotificationAsRead({ ...data, io, receiverSocketId })
+                await matchOfferNotificationLogic.markOfferNotificationAsRead({ ...data, io, receiverSocketId, userSocketId })
             })
 
 
@@ -71,7 +72,7 @@ module.exports = function(io) {
                 if (!socket.rooms.has(roomId)) {
                     socket.join(roomId);
                     console.log(`User: ${userId} has joined room: ${roomId}`);               
-                    const chatHistory = await ChatController.getChatHistory(roomId);
+                    const chatHistory = await chatController.getChatHistory(roomId);
                     socket.emit('chatHistory', chatHistory);   
                     
                     // Check for notifications
@@ -84,7 +85,7 @@ module.exports = function(io) {
             // Save messages
             socket.on('saveMessage', async (data) => {
                 data = { ...data, userId }
-                const { success, message, savedMessage } = await ChatController.saveMessage(data)
+                const { success, message, savedMessage } = await chatController.saveMessage(data)
 
                 // Send error message if it contains profanity
                 if (success === false){
@@ -115,28 +116,26 @@ module.exports = function(io) {
             //=======================================================
 
             // Handle trade completion
-            socket.on('markTradeComplete', ({ roomId, tradeId, senderId, senderName, action }) => {
-                if (tradeId) {
-                    
+            socket.on('markTradeComplete', ({ roomId, tradeId, senderId, offerId, senderName, action }) => {
+                if (tradeId) {                    
                     if(action === 'sender'){
-                        
-                        socket.to(roomId).emit('completeTradeNotif', { senderName, from: 'sender', message: 'hello there' });
-                    }
-                    
+                        tradesController.completeTrade({ tradeId, senderId, offerId })
+                        socket.to(roomId).emit('completeTradeNotif', { senderName, from: 'sender' });
+                    }                    
                     if(action === 'receiver'){
-
+                        tradesController.completeTrade({ tradeId, senderId, offerId })
                         // socket.to(roomId).emit('completeTradeNotif', { senderName, from: 'receiver' });
                     }          
                 }
             });
 
             // Handle withdraw from trade or Cancel trade
-            socket.on('withdrawTrade', ({ roomId, tradeId, senderId, senderName, action }) => {
+            socket.on('withdrawTrade', ({ roomId, tradeId, senderId, receiverId, senderName, action }) => {
                 if (tradeId) {
                     if(action === 'sender') {
 
-                        
-                        socket.to(roomId).emit('withdrawTradeNotification', { senderName });
+                        tradesController.cancelTrade({ tradeId, senderId, receiverId })
+                        socket.to(roomId).emit('withdrawTradeNotif', { senderName });
                     }
                 }
             });

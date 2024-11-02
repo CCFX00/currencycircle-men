@@ -1,7 +1,9 @@
 const Offer = require('../models/offersModel')
 const MatchedOfferStatus = require('../models/matchedOfferStatusModel')
 const { getOfferDetails } = require('../utils/offersHelper')
-const { startTradeCountdown } = require('../utils/timer')
+const { startTradeCountdown } = require('./timerController')
+const TradeStatus = require('../models/tradeStatusModel');
+const MatchOfferNotification = require('../models/matchedOfferNotificationModel')
 
 // Create offer
 const createOffer = async(req, res) => {
@@ -54,10 +56,29 @@ const displayOfferDetails = async (req, res) => {
 }
 
 // Accepting an offer
-const acceptOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwnerId, io, receiverSocketId) => {
+const acceptOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwnerId, matchFee, name, io, receiverSocketId, userSocketId) => {
     try {
+
+        // console.log(userId, matchedOfferId, matchedOfferOwnerId)
+        
+        // Delete all documents where `receiverId` does not match `userId` (Match offer request sent from one user to many other users)
+        await MatchOfferNotification.deleteMany({
+            senderId: matchedOfferOwnerId,
+            offerId: matchedOfferId,
+            recieverId: { $ne: userId }
+        });
+
+        // Delete all documents where `senderId` does not match `matchedOfferOwnerId` and `offerId` does not match `matchedOfferId` (Match offer requests received from more than one other user)
+        // await MatchOfferNotification.deleteMany({
+        //     $or: [
+        //         { senderId: { $ne: matchedOfferOwnerId } },
+        //         { offerId: { $ne: matchedOfferId } }
+        //     ]
+        // });  // Both work individually but the issue is to find how to make them work in one query
+
+
         // Update the matched offer status for both users
-    const { upsertedId } = await MatchedOfferStatus.updateMany(
+        const { upsertedId } = await MatchedOfferStatus.updateMany(
             { 
                 $or: [
                     { 
@@ -84,9 +105,30 @@ const acceptOffer = async (userId, userOfferId, matchedOfferId, matchedOfferOwne
             },
             { upsert: true, new: true }
         )
+
+        // Storing the the Trade Status
+        const tradeStatus = await TradeStatus.create({
+            tradeId: upsertedId
+        }).then().catch(err => {throw new Error(err)})
+
+        // Sending the notification to the counterpay ( ...ensuring that the notification is stored in the database)
+        const message = {text: `Reminder: Your offer has been accepted, you have 48 hours left to complete the trade`, trade: true}
+        // const message = {text: `Reminder: ${name} has accepted your offer, you have 48 hours left to complete the trade`, trade: true}
+        if(receiverSocketId) io.to(receiverSocketId).emit('newNotification', { message })
+        
+        // Storing the Trade Notification for offer acceptance
+        // await MatchOfferNotification.create({
+        //     tradeId: upsertedId,
+        //     trade: true,
+        //     offerId: userOfferId,
+        //     matchFee,
+        //     senderId: userId,
+        //     recieverId: matchedOfferOwnerId,
+        //     message: `Reminder: ${name} has accepted your offer, you have 48 hours left to complete the trade`            
+        // })  //faced an issue with the sender name not corresponding instead to the receiver, has to be addressed from the front end and correct data gotten from the cookies. Had to comment this out since it was creating some mixup on the froontend.
                 
         // Starting the countdown function
-        startTradeCountdown({ io, tradeId: upsertedId, receiverSocketId })
+        startTradeCountdown({ io, tradeId: upsertedId, receiverSocketId, userSocketId })
 
         return {
             success: true,

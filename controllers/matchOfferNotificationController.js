@@ -2,8 +2,22 @@ const Notification = require('../models/matchedOfferNotificationModel')
 const { acceptOffer, declineOffer } = require('./offersController')
 
 // Function to send a notification
-exports.sendMatchNotification = async ({ senderId, recieverId, offerId, message, matchFee }) => {
-    try {
+exports.sendOfferNotification = async ({ senderId, recieverId, offerId, message, matchFee }) => {
+    try {        
+        // Check for existing notification
+        const existNotification = await Notification.find({ 
+            senderId,
+            recieverId,
+            offerId, 
+        })
+
+        if(existNotification.length > 0) {
+            return {
+                success: false, 
+                message: 'Notification was sent already'
+            }
+        }
+
         const notification = new Notification({
             senderId,
             recieverId,
@@ -11,6 +25,7 @@ exports.sendMatchNotification = async ({ senderId, recieverId, offerId, message,
             message,
             matchFee
         })
+
         await notification.save()
         return notification
     } catch (error) {
@@ -20,7 +35,7 @@ exports.sendMatchNotification = async ({ senderId, recieverId, offerId, message,
 }
 
 // Function to get unread notifications for a user
-exports.getMatchNotifications = async (userId) => {
+exports.getOfferNotifications = async (userId) => {
     try {
         return await Notification.find({ 
             recieverId: userId 
@@ -32,7 +47,7 @@ exports.getMatchNotifications = async (userId) => {
 }
 
 // Function to get unread notifications for a user
-exports.checkMatchNotification = async ({ offerId }) => {
+exports.checkOfferNotification = async ({ offerId }) => {
     try {
         return await Notification.find({ 
             offerId
@@ -44,7 +59,7 @@ exports.checkMatchNotification = async ({ offerId }) => {
 }
 
 // Function to mark a notification as read and handle offer acceptance/decline
-exports.markMatchNotificationAsRead = async ({ userId, userOfferId, matchedOfferId, matchedOfferOwnerId, action, io, receiverSocketId }) => {
+exports.markOfferNotificationAsRead = async ({ userId, userOfferId, matchedOfferId, matchedOfferOwnerId, action, matchFee, name, io, receiverSocketId, userSocketId }) => {
     try {
         // Find both notifications related to the offer
         const notification = await Notification.findOne({
@@ -61,10 +76,10 @@ exports.markMatchNotificationAsRead = async ({ userId, userOfferId, matchedOffer
         // Handle offer acceptance or decline
         if (action === 'accept') {
             notification.isAccepted = true;
-            await acceptOffer(userId, userOfferId, matchedOfferId, matchedOfferOwnerId, io, receiverSocketId);
+            await acceptOffer(userId, userOfferId, matchedOfferId, matchedOfferOwnerId, matchFee, name, io, receiverSocketId, userSocketId);
         } else if (action === 'decline') {
             notification.isAccepted = false;
-            await declineOffer(userId, userOfferId, matchedOfferId, matchedOfferOwnerId, io, receiverSocketId);
+            await declineOffer(userId, userOfferId, matchedOfferId, matchedOfferOwnerId, io, receiverSocketId, userSocketId);
         }
 
         // Save the updated notification document

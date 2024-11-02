@@ -9,12 +9,21 @@ const tradeStatusSchema = new mongoose.Schema({
     senderId: {
         type: mongoose.Schema.ObjectId,
         ref: "User",
-        required: true
+        default: null
     },
     receiverId: {
         type: mongoose.Schema.ObjectId,
         ref: "User",
-        required: true
+        default: null
+    },
+    offerId: {
+        type: mongoose.Schema.ObjectId,
+        ref: "Offer",
+        default: null
+    },
+    cancelledBy: {
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
     },
     senderCompleted: {
         type: Boolean,

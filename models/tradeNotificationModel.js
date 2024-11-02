@@ -1,6 +1,21 @@
 const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
+    tradeId: {
+        type: mongoose.Schema.ObjectId,
+        ref: "Matched Offer Status",
+        required: true
+    },
+    roomId: {
+        type: mongoose.Schema.ObjectId,
+        ref: "Matched Offer Status",
+        required: true
+    },
+    tradeStatus:{
+        type: mongoose.Schema.ObjectId,
+        ref: "Trade Status",
+        required: true
+    },
     senderId: {
         type: mongoose.Schema.ObjectId,
         ref: "User",
@@ -13,11 +28,6 @@ const notificationSchema = new mongoose.Schema({
     },
     message: {
         type: String,
-        required: true
-    },
-    tradeId: {
-        type: mongoose.Schema.ObjectId,
-        ref: "Matched Offer Status",
         required: true
     },
     isRead: {

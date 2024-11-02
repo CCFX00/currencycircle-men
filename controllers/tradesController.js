@@ -3,6 +3,7 @@ const { matchOffers, getOfferDetails } = require('../utils/offersHelper')
 const { formatDate } = require('../utils/dateTime')
 const TradeStatus = require('../models/tradeStatusModel')
 const TradeNotification = require('../models/tradeNotificationModel')
+const MatchOfferStatus = require('../models/matchedOfferStatusModel')
 
 const getMatchedTrades = async (req, res) => {
     try {
@@ -134,8 +135,9 @@ const displayAllMatchedTrades = async (req, res) => {
 }
 
 // Mark trade as completed
-const completeTrade = async ({ tradeId, userId }) => {
+const completeTrade = async ({ tradeId, senderId, offerId }) => {
     try {
+        console.log(offerId)
         const tradeStatus = await TradeStatus.findOne({ tradeId });
 
         if (!tradeStatus) {
@@ -145,11 +147,22 @@ const completeTrade = async ({ tradeId, userId }) => {
             }
         }
 
+        if (tradeStatus.senderId === null) { 
+            tradeStatus.senderId = senderId // Filling the senderId field for the first request
+            if(tradeStatus.offerId === null) {
+                tradeStatus.offerId = offerId
+            }
+        } 
+
+        if (tradeStatus.senderId !== null && tradeStatus.senderId.toString() !== senderId) {
+            tradeStatus.receiverId = senderId // Filling the receiverId field on the second request
+        }
+
         // Update completion status based on sender or receiver role
-        if (tradeStatus.senderId.toString() === userId) {
+        if (tradeStatus.senderId.toString() === senderId) {
             tradeStatus.senderCompleted = true;
             tradeStatus.status = 'pendingPartial';
-        } else if (tradeStatus.receiverId.toString() === userId) {
+        } else if (tradeStatus.receiverId.toString() === senderId) {
             tradeStatus.receiverCompleted = true;
             tradeStatus.status = 'pendingPartial';
         }
@@ -176,7 +189,7 @@ const completeTrade = async ({ tradeId, userId }) => {
 }
 
 // Cancel a trade
-const cancelTrade = async ({ tradeId, userId }) => {
+const cancelTrade = async ({ tradeId, senderId, receiverId }) => {
     try {
         const trade = await TradeStatus.findOne({ tradeId });
 
@@ -188,9 +201,14 @@ const cancelTrade = async ({ tradeId, userId }) => {
         }
 
         // Mark trade as cancelled immediately when any party initiates cancellation
+        trade.senderId = senderId;
+        trade.receiverId = receiverId;
         trade.status = 'cancelled';
+        trade.cancelledBy = senderId,
         trade.updatedAt = Date.now();
         await trade.save();
+
+        await MatchOfferStatus.deleteOne({ _id: tradeId })
 
         return {
             success: true,
@@ -208,9 +226,12 @@ const cancelTrade = async ({ tradeId, userId }) => {
 // Get all completed trades
 const getAllCompletedTrades = async ({ userId }) => {
     try {
-        const completedTrades = await TradeStatus.find({ senderId: userId, status: "completed" })
-            .populate('senderId', 'name userName') // Populates sender details if needed
-            .populate('receiverId', 'name userName'); // Populates receiver details if needed
+        const completedTrades = await TradeStatus.find({
+            $or: [{ senderId: userId }, { receiverId: userId }],
+            status: "completed"
+        })
+        .populate('senderId', 'name userName') // Populates sender details if needed
+        .populate('receiverId', 'name userName'); // Populates receiver details if needed
 
         if (completedTrades.length === 0) {
             return res.status(200).json({
@@ -235,9 +256,12 @@ const getAllCompletedTrades = async ({ userId }) => {
 // Get all cancelled trades
 const getAllCancelledTrades = async ({ userId }) => {
     try {
-        const cancelledTrades = await TradeStatus.find({ senderId: userId, status: "cancelled" })
-            .populate('senderId', 'name userName') // Populates sender details if needed
-            .populate('receiverId', 'name userName'); // Populates receiver details if needed
+        const cancelledTrades = await  TradeStatus.find({
+            $or: [{ senderId: userId }, { receiverId: userId }],
+            status: "cancelled"
+        })
+        .populate('senderId', 'name userName') // Populates sender details if needed
+        .populate('receiverId', 'name userName'); // Populates receiver details if needed
 
         if (cancelledTrades.length === 0) {
             return {
@@ -260,11 +284,12 @@ const getAllCancelledTrades = async ({ userId }) => {
 };
 
 
-
-
-
 module.exports = {
     getMatchedTrades,
     displayMatchedTrades,
-    displayAllMatchedTrades
+    displayAllMatchedTrades,
+    completeTrade,
+    cancelTrade,
+    getAllCompletedTrades,
+    getAllCancelledTrades
 }

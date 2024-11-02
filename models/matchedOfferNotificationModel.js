@@ -28,6 +28,13 @@ const notificationSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    trade: {   // added trade and tradeId to be able to store notification after it has been accepted, this will help differentiate between the received one. 
+        type: Boolean
+    }, 
+    tradeId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Matched Offer Status',
+    },
     isAccepted: {
         type: Boolean
     },

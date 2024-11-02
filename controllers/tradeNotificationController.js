@@ -1,17 +1,16 @@
-// Save a new notification
-exports.saveNotification = async (data) => {
-    try {
-        const notification = new TradeNotification({
-            ...data,
-            createdAt: Date.now(),
-            expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Set expiry to 2 days from now
-        });
-        await notification.save();
-        return notification;
-    } catch (error) {
-        throw new Error(`Error saving notification: ${error.message}`);
+const TradeNotification = require('../models/tradeNotificationModel');
+
+// Save notifications
+exports.saveTradeNotification = async({  }) => {
+    try{
+
+    }catch(error){
+        return { 
+            success: false, 
+            message: `Error fetching notifications: ${error.message}` 
+        }
     }
-};
+}
 
 // Get notifications by userId or roomId
 exports.getNotifications = async ({ userId, roomId }) => {
