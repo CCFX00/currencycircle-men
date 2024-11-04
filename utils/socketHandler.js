@@ -130,11 +130,11 @@ module.exports = function(io) {
             });
 
             // Handle withdraw from trade or Cancel trade
-            socket.on('withdrawTrade', ({ roomId, tradeId, senderId, receiverId, senderName, action }) => {
+            socket.on('withdrawTrade', ({ roomId, tradeId, senderId, receiverId, offerId, senderName, action }) => {
                 if (tradeId) {
                     if(action === 'sender') {
 
-                        tradesController.cancelTrade({ tradeId, senderId, receiverId })
+                        tradesController.cancelTrade({ tradeId, senderId, receiverId, offerId })
                         socket.to(roomId).emit('withdrawTradeNotif', { senderName });
                     }
                 }

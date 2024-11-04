@@ -189,7 +189,7 @@ const completeTrade = async ({ tradeId, senderId, offerId }) => {
 }
 
 // Cancel a trade
-const cancelTrade = async ({ tradeId, senderId, receiverId }) => {
+const cancelTrade = async ({ tradeId, senderId, receiverId, offerId }) => {
     try {
         const trade = await TradeStatus.findOne({ tradeId });
 
@@ -203,6 +203,7 @@ const cancelTrade = async ({ tradeId, senderId, receiverId }) => {
         // Mark trade as cancelled immediately when any party initiates cancellation
         trade.senderId = senderId;
         trade.receiverId = receiverId;
+        trade.offerId = offerId;
         trade.status = 'cancelled';
         trade.cancelledBy = senderId,
         trade.updatedAt = Date.now();
@@ -224,14 +225,17 @@ const cancelTrade = async ({ tradeId, senderId, receiverId }) => {
 }
 
 // Get all completed trades
-const getAllCompletedTrades = async ({ userId }) => {
+const getAllCompletedTrades = async (req, res) => {
     try {
+        const { userId } = req.body
+
         const completedTrades = await TradeStatus.find({
             $or: [{ senderId: userId }, { receiverId: userId }],
             status: "completed"
         })
-        .populate('senderId', 'name userName') // Populates sender details if needed
-        .populate('receiverId', 'name userName'); // Populates receiver details if needed
+        .populate('senderId', 'name userName city country userImage') // Populates sender details
+        .populate('receiverId', 'name userName city country userImage') // Populates receiver details
+        .populate('offerId', 'from to amount value rate') // Populates the offer details
 
         if (completedTrades.length === 0) {
             return res.status(200).json({
@@ -254,32 +258,35 @@ const getAllCompletedTrades = async ({ userId }) => {
 };
 
 // Get all cancelled trades
-const getAllCancelledTrades = async ({ userId }) => {
+const getAllCancelledTrades = async (req, res) => {
     try {
+        const { userId } = req.body
+
         const cancelledTrades = await  TradeStatus.find({
             $or: [{ senderId: userId }, { receiverId: userId }],
             status: "cancelled"
         })
-        .populate('senderId', 'name userName') // Populates sender details if needed
-        .populate('receiverId', 'name userName'); // Populates receiver details if needed
+        .populate('senderId', 'name userName city country userImage') // Populates sender details
+        .populate('receiverId', 'name userName city country userImage') // Populates receiver details 
+        .populate('offerId', 'from to amount value rate') // Populates the offer details
 
         if (cancelledTrades.length === 0) {
-            return {
+            return res.status(200).json({
                 success: true,
                 message: 'No cancelled trades found',
                 cancelledTrades: []
-            }
+            })
         }
 
-        return {
+        return res.status(200).json({
             success: true,
             cancelledTrades
-        }
+        })
     } catch (error) {
-        return {
+        return res.status(500).json({
             success: false,
             message: `Error fetching cancelled trades: ${error.message}`
-        }
+        })
     }
 };
 
