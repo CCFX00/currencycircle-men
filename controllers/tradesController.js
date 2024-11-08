@@ -2,8 +2,9 @@ const Offer = require('../models/offersModel')
 const { matchOffers, getOfferDetails } = require('../utils/offersHelper')
 const { formatDate } = require('../utils/dateTime')
 const TradeStatus = require('../models/tradeStatusModel')
-const TradeNotification = require('../models/tradeNotificationModel')
 const MatchOfferStatus = require('../models/matchedOfferStatusModel')
+const TradeNotification = require('../models/tradeNotificationModel')
+
 
 const getMatchedTrades = async (req, res) => {
     try {
@@ -137,7 +138,6 @@ const displayAllMatchedTrades = async (req, res) => {
 // Mark trade as completed
 const completeTrade = async ({ tradeId, senderId, offerId }) => {
     try {
-        console.log(offerId)
         const tradeStatus = await TradeStatus.findOne({ tradeId });
 
         if (!tradeStatus) {
@@ -148,14 +148,14 @@ const completeTrade = async ({ tradeId, senderId, offerId }) => {
         }
 
         if (tradeStatus.senderId === null) { 
-            tradeStatus.senderId = senderId // Filling the senderId field for the first request
+            tradeStatus.senderId = senderId // Filling the senderId field for the first request (Sender)
             if(tradeStatus.offerId === null) {
                 tradeStatus.offerId = offerId
             }
         } 
 
         if (tradeStatus.senderId !== null && tradeStatus.senderId.toString() !== senderId) {
-            tradeStatus.receiverId = senderId // Filling the receiverId field on the second request
+            tradeStatus.receiverId = senderId // Filling the receiverId field on the second request (Receiver)
         }
 
         // Update completion status based on sender or receiver role
@@ -233,9 +233,11 @@ const getAllCompletedTrades = async (req, res) => {
             $or: [{ senderId: userId }, { receiverId: userId }],
             status: "completed"
         })
-        .populate('senderId', 'name userName city country userImage') // Populates sender details
-        .populate('receiverId', 'name userName city country userImage') // Populates receiver details
-        .populate('offerId', 'from to amount value rate') // Populates the offer details
+        .populate([
+            { path: 'senderId', select: 'name userName city country userImage' },
+            { path: 'receiverId', select: 'name userName city country userImage' },
+            { path: 'offerId', select: 'from to amount value rate' }
+        ]) // Populates sender details, receiver details, the offer details
 
         if (completedTrades.length === 0) {
             return res.status(200).json({
@@ -266,9 +268,11 @@ const getAllCancelledTrades = async (req, res) => {
             $or: [{ senderId: userId }, { receiverId: userId }],
             status: "cancelled"
         })
-        .populate('senderId', 'name userName city country userImage') // Populates sender details
-        .populate('receiverId', 'name userName city country userImage') // Populates receiver details 
-        .populate('offerId', 'from to amount value rate') // Populates the offer details
+        .populate([
+            { path: 'senderId', select: 'name userName city country userImage' },
+            { path: 'receiverId', select: 'name userName city country userImage' },
+            { path: 'offerId', select: 'from to amount value rate' }
+        ]) // Populates sender details, receiver details, the offer details
 
         if (cancelledTrades.length === 0) {
             return res.status(200).json({

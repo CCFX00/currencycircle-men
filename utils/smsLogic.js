@@ -1,10 +1,10 @@
 const twilio = require('twilio')
 
+const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+
 const sendSMS = async(number, bdy, otp) =>{
     try{
         if(!otp){
-            const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-
             const message = await client.messages
             .create({
                 body: bdy,
@@ -14,8 +14,6 @@ const sendSMS = async(number, bdy, otp) =>{
 
             return message
         }else{
-            const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-
             const message = await client.messages
             .create({
                 body: `-: Hi there!\nHere's your CCFX one time password:\n${otp} \nValid 1 hour.`,
