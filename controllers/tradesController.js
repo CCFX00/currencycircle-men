@@ -136,7 +136,7 @@ const displayAllMatchedTrades = async (req, res) => {
 }
 
 // Mark trade as completed
-const completeTrade = async ({ tradeId, senderId, offerId }) => {
+const completeTrade = async ({ tradeId, senderId, receiverId, offerId }) => {
     try {
         const tradeStatus = await TradeStatus.findOne({ tradeId });
 
@@ -148,22 +148,23 @@ const completeTrade = async ({ tradeId, senderId, offerId }) => {
         }
 
         if (tradeStatus.senderId === null) { 
-            tradeStatus.senderId = senderId // Filling the senderId field for the first request (Sender)
+            tradeStatus.senderId = senderId // Filling the senderId field
+            tradeStatus.receiverId = receiverId  // Filling the receiverId field
             if(tradeStatus.offerId === null) {
                 tradeStatus.offerId = offerId
             }
         } 
 
-        if (tradeStatus.senderId !== null && tradeStatus.senderId.toString() !== senderId) {
-            tradeStatus.receiverId = senderId // Filling the receiverId field on the second request (Receiver)
-        }
+        // if (tradeStatus.senderId !== null && tradeStatus.senderId.toString() !== senderId) {
+        //     tradeStatus.receiverId = senderId // Filling the receiverId field on the second request (Receiver)
+        // }
 
         // Update completion status based on sender or receiver role
         if (tradeStatus.senderId.toString() === senderId) {
-            tradeStatus.senderCompleted = true;
+            tradeStatus.senderCompleted = true;  // Filling the senderId completed field for the first request (Sender)
             tradeStatus.status = 'pendingPartial';
         } else if (tradeStatus.receiverId.toString() === senderId) {
-            tradeStatus.receiverCompleted = true;
+            tradeStatus.receiverCompleted = true;  // Filling the receiverId completed field on the second request (Receiver)
             tradeStatus.status = 'pendingPartial';
         }
 

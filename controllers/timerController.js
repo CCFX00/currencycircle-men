@@ -7,7 +7,7 @@ const { sendMail, genMail } = require('../utils/mailLogic')
 
 // Countdown function for trade expiration
 exports.startTradeCountdown = async ({ io, tradeId, receiverSocketId, userSocketId }) => {
-    try {       
+    try {     
         // Storing the trade countdown information
         await TradeCountdown.create({
             tradeId,
@@ -30,11 +30,10 @@ exports.startTradeCountdown = async ({ io, tradeId, receiverSocketId, userSocket
             if(tradeStatus.status === 'completed'){
                 return
             }else if(tradeStatus.status === 'pendingPartial'){
-                if(tradeStatus.senderCompleted === true && tradeStatus.receiverCompleted === false){
+                if(tradeStatus.senderCompleted === true && tradeStatus.receiverCompleted === false){ 
                     smsText = `CCFX Reminder:\nHello ${tradeStatus.receiverId.userName}, \n${tradeStatus.senderId.userName} has completed the trade.\nYou have 24 hours left to complete the trade`
                     mailText = `
-                        <p>Hello ${tradeStatus.receiverId.userName},</p>
-                        <p><br/>${tradeStatus.senderId.userName} has completed the trade.\nYou have 24 hours left to complete the trade</p>
+                        <p>${tradeStatus.senderId.userName} has completed the trade.\nYou have 24 hours left to complete the trade</p>
                     `
                     // Sending SMS and Email Notification to Receiver
                     sendSMS(tradeStatus.receiverId.phoneNumber, smsText)
@@ -44,8 +43,7 @@ exports.startTradeCountdown = async ({ io, tradeId, receiverSocketId, userSocket
                 }else if(tradeStatus.senderCompleted === false && tradeStatus.receiverCompleted === true){
                     smsText = `CCFX Reminder:\nHello ${tradeStatus.senderId.userName}, \n${tradeStatus.receiverId.userName} has completed the trade.\nYou have 24 hours left to complete the trade`
                     mailText = `
-                        <p>Hello ${tradeStatus.senderId.userName},</p>
-                        <p><br/>${tradeStatus.receiverId.userName} has completed the trade.\nYou have 24 hours left to complete the trade</p>
+                        <p>${tradeStatus.receiverId.userName} has completed the trade.\nYou have 24 hours left to complete the trade</p>
                     `
                     
                     // Sending SMS and Email Notification to Sender
@@ -59,7 +57,10 @@ exports.startTradeCountdown = async ({ io, tradeId, receiverSocketId, userSocket
             sendRealTimeNotification(io, userSocketId, { text: `Hello user, \nReminder: 24 hours left to complete the trade`, trade: true });
             sendRealTimeNotification(io, receiverSocketId, { text: `Hello user, \nReminder: 24 hours left to complete the trade`, trade: true });
 
+        // }, 1 * 60 * 1000);  // Test: sending notif after 1 minute
         }, 24 * 60 * 60 * 1000);
+        
+         
 
         // Expire the trade after 48 hours
         setTimeout(async () => {

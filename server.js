@@ -16,7 +16,7 @@ require('dotenv').config({
 require('./db/connectDatabase')()
 
 // Starting express server
-const PORT = process.env._PORT || 3000
+const PORT = process.env.PORT || 3000
 const expressServer = app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`)
 })

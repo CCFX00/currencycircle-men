@@ -10,7 +10,12 @@ const sendSMS = async(number, bdy, otp) =>{
                 body: bdy,
                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
                 to: `${number}`
-            })
+            }).then(
+                // message => console.log(message.sid)
+            )
+            .catch(
+                error => console.error(error)
+            );
 
             return message
         }else{
@@ -19,7 +24,12 @@ const sendSMS = async(number, bdy, otp) =>{
                 body: `-: Hi there!\nHere's your CCFX one time password:\n${otp} \nValid 1 hour.`,
                 from: `${process.env.TWILIO_PHONE_NUMBER}`,
                 to: `${number}`
-            })
+            }).then(
+                // message => console.log(message.sid)
+            )
+            .catch(
+                error => console.error(error)
+            );
 
             return message
         }

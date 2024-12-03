@@ -49,6 +49,10 @@ exports.getOfferNotifications = async (userId) => {
 // Function to get unread notifications for a user
 exports.checkOfferNotification = async ({ offerId }) => {
     try {
+        if(!offerId || offerId === "undefined" || offerId === null){
+            return 
+        }
+        
         return await Notification.find({ 
             offerId
         })

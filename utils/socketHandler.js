@@ -116,10 +116,10 @@ module.exports = function(io) {
             //=======================================================
 
             // Handle trade completion
-            socket.on('markTradeComplete', ({ roomId, tradeId, senderId, offerId, senderName, action }) => {
+            socket.on('markTradeComplete', ({ roomId, tradeId, senderId, receiverId, offerId, senderName, action }) => {
                 if (tradeId) {                    
                     if(action === 'sender'){
-                        tradesController.completeTrade({ tradeId, senderId, offerId })
+                        tradesController.completeTrade({ tradeId, senderId, receiverId, offerId })
                         socket.to(roomId).emit('completeTradeNotif', { senderName, from: 'sender' });
                     }                    
                     if(action === 'receiver'){
